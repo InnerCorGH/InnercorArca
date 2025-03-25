@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/InnercorArca/copilot-chat/2a66863f/sessions
+/.vs/InnercorArca
+/Console/bin
+/Console/obj
+/InnercorArca/bin/Debug
+/InnercorArca/obj
+/packages/Portable.BouncyCastle.1.9.0
+*.pub
+/andalerba

@@ -1,12 +1,19 @@
 ﻿using InnercorArca.V1.Helpers;
+using InnercorArca.V1.Wsfev1;
+using InnercorArca.V1.Wsfev1Homo;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Runtime.Remoting;
 using System.Security.Cryptography.X509Certificates;
+using System.Xml.Serialization;
 using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace InnercorArca.V1
 {
@@ -82,9 +89,9 @@ namespace InnercorArca.V1
         [DispId(26)]
         string GetVencimientoCAE();
         [DispId(27)]
-        string GetResult();
+        string GetResultado();
         [DispId(28)]
-        string GetReproc();
+        string GetReprocesar();
 
 
     }
@@ -109,7 +116,7 @@ namespace InnercorArca.V1
         public string TraceBack { get; private set; } = string.Empty;
 
         internal bool Produccion { get; private set; } = false;
-        internal string PathCache { get; set; } = string.Empty;
+        internal string PathCache { get; private set; } = string.Empty;
 
         internal string NumeroCAE { get; set; }
         internal string VencimientoCAE { get; set; }
@@ -156,8 +163,13 @@ namespace InnercorArca.V1
         {
             try
             {
+                
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = !(urlWSAA.ToUpper().Contains("HOMO"));
+
+                // Asegura que el protocolo TLS 1.2 se use siempre
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                if (!Produccion) ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
 
                 // Definir la ruta del archivo .cache
                 PathCache = Path.Combine(dllPath, Path.GetFileName(pathCRT).Replace(".crt", ".cache"));
@@ -283,22 +295,24 @@ namespace InnercorArca.V1
 
                 XmlResponse = string.Empty;
                 ErrorCode = 0;
-                ErrorDesc = "";
-                Cuit = "0";
-
-                URL = string.Empty;
+                ErrorDesc = ""; 
                 Excepcion = string.Empty;
                 TraceBack = string.Empty;
-
-                Produccion = false;
-                PathCache = string.Empty;
+                 
 
                 NumeroCAE = string.Empty;
                 VencimientoCAE = DateTime.MinValue.ToString("yyyyMMdd");
                 Result = string.Empty;
                 Reproc = string.Empty;
+                 
+                CAEDetRequest = null;
+                AlicIvas = null;
+                Opcionales = null;
+                Tributos = null;
+                ComprobantesAsociados = null;
 
-                TkValido = null;
+                Neto = 0;
+                Iva = 0;
             }
             catch (Exception)
             {
@@ -317,36 +331,23 @@ namespace InnercorArca.V1
             string errDesc = "";
             string xmlResponse = "";
 
-
             try
             {
-                // Instancia el servicio adecuado
-                object objWSFEV1;
+
                 //obtiene token y sign del archivo cache
                 if (TkValido == null)
-                {
                     TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache));
-                }
 
+                // Instancia el servicio adecuado
+                object objWSFEV1;
 
-                if (Produccion)
-                {
-                    if (feAuthRequest == null)
-                        HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    objWSFEV1 = new Wsfev1.Service();
-                }
-                else
-                {
-                    if (feAuthRequest == null)
-                        HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    objWSFEV1 = new Wsfev1Homo.Service();
-
-                }
-
+                if (feAuthRequest == null)
+                    HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
 
                 // Realiza el casting correcto según el entorno
                 if (Produccion)
                 {
+                    objWSFEV1 = new Wsfev1.Service();
                     var wsfev1 = (Wsfev1.Service)objWSFEV1;
                     var objFERecuperaLastCbteResponse = wsfev1.FECompUltimoAutorizado((Wsfev1.FEAuthRequest)feAuthRequest, nPtoVta, nTipCom);
 
@@ -356,13 +357,17 @@ namespace InnercorArca.V1
                 }
                 else
                 {
+                    objWSFEV1 = new Wsfev1Homo.Service();
                     var wsfev1 = (Wsfev1Homo.Service)objWSFEV1;
                     var objFERecuperaLastCbteResponse = wsfev1.FECompUltimoAutorizado((Wsfev1Homo.FEAuthRequest)feAuthRequest, nPtoVta, nTipCom);
 
                     HelpersArca.ProcesarRespuesta(objFERecuperaLastCbteResponse, ref errCode, ref errDesc, ref xmlResponse);
                     if (errCode == 0) nUltNro = objFERecuperaLastCbteResponse.CbteNro;
+
                 }
+                errDesc += $" Produccion {Produccion} {objWSFEV1.GetType()}";
                 SetError((Errors)errCode, errDesc);
+                XmlResponse = xmlResponse;
                 UltimoNumero_ = nUltNro;
                 return true;
             }
@@ -422,15 +427,19 @@ namespace InnercorArca.V1
                 // Ejecutar consulta
                 object objWSFEV1;
                 if (Produccion)
+                {
                     objWSFEV1 = new Wsfev1.Service();
+                }
                 else
                     objWSFEV1 = new Wsfev1Homo.Service();
+
+
                 dynamic response = ((dynamic)objWSFEV1).FECompConsultar(authData, req);
 
+               
                 // Verificar errores en la respuesta
                 if (response.Errors != null && response.Errors.Length > 0)
                 {
-
                     int errCode = 0; string errDesc = ""; string xmlResponse = "";
                     HelpersArca.ProcesarRespuesta(response, ref errCode, ref errDesc, ref xmlResponse);
                     SetError((Errors)errCode, errDesc);
@@ -454,6 +463,7 @@ namespace InnercorArca.V1
                 NumeroCAE = cNroCAE;
                 VencimientoCAE = cVtoCAE;
 
+                XmlResponse = HelpersArca.SerializeObjectAXml(response);
                 return true;
             }
             catch (Exception ex)
@@ -709,6 +719,9 @@ namespace InnercorArca.V1
                 string errDesc = "";
                 string xmlResponse = ""; string cae = ""; DateTime vtoCae = DateTime.MinValue; string result = ""; string reproc = "";
                 HelpersArca.ProcesarRespuestaFactura(respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result, ref reproc);
+
+                Result = result;
+                Reproc = reproc;
                 SetError((Errors)errCode, errDesc);
                 XmlResponse = xmlResponse;
 
@@ -722,11 +735,11 @@ namespace InnercorArca.V1
             }
         }
 
-        public string GetResult()
+        public string GetResultado()
         {
             return Result;
         }
-        public string GetReproc()
+        public string GetReprocesar()
         {
             return Reproc;
         }
@@ -768,7 +781,7 @@ namespace InnercorArca.V1
 
         public string GetVersion()
         {
-            return "1.1.11"; // Cambia esto según tu versión actual
+            return "1.1.15"; // Cambia esto según tu versión actual
         }
 
         private void SetError(InnercorArcaModels.Errors errorCode, string errorDesc)

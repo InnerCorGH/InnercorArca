@@ -345,8 +345,6 @@ namespace InnercorArca.V1.Helpers
                     loginTicketResponse = servicioWsaa.loginCms(cmsFirmadoBase64);
                 }
 
-
-
                 if (this._verboseMode)
                 {
                     //      Console.WriteLine("***LoguinTicketResponse: ");

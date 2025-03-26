@@ -10,6 +10,7 @@ namespace InnercorArca.V1.Helpers
     {
         public static bool CreatePfx(string crtPath, string keyPath, string pfxOutputPath, string pfxPassword, out string errorMessage)
         {
+            
             errorMessage = string.Empty;
             try
             {
@@ -57,20 +58,32 @@ namespace InnercorArca.V1.Helpers
 
         private static RSACryptoServiceProvider LoadPrivateKeyFromPem(string keyPath)
         {
-            string pemKey = File.ReadAllText(keyPath);
-            return DecodeRsaPrivateKey(pemKey);
+            try
+            {
+                string pemKey = File.ReadAllText(keyPath);
+                return DecodeRsaPrivateKey(pemKey);
+            }
+            catch (Exception )
+            {
+                return null;
+            }
         }
-
         private static RSACryptoServiceProvider DecodeRsaPrivateKey(string pemKey)
         {
-            string base64Key = Regex.Replace(pemKey, @"-----(BEGIN|END) (RSA )?PRIVATE KEY-----", "").Replace("\n", "").Replace("\r", "").Trim();
-            byte[] privateKeyBytes = Convert.FromBase64String(base64Key);
+            try
+            {
+                string base64Key = Regex.Replace(pemKey, @"-----(BEGIN|END) (RSA )?PRIVATE KEY-----", "").Replace("\n", "").Replace("\r", "").Trim();
+                byte[] privateKeyBytes = Convert.FromBase64String(base64Key);
 
-            var rsa = new RSACryptoServiceProvider();
-            rsa.ImportCspBlob(privateKeyBytes);
-            return rsa;
+                var rsa = new RSACryptoServiceProvider();
+                rsa.ImportCspBlob(privateKeyBytes);
+                return rsa;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
-
         private static X509Certificate2 AttachPrivateKey(X509Certificate2 cert, RSACryptoServiceProvider privateKey)
         {
             return cert.CopyWithPrivateKey(privateKey);

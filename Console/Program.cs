@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Remoting;
 using System.Threading.Tasks;
 
 namespace Console_InnercorDLL
@@ -73,6 +74,7 @@ namespace Console_InnercorDLL
             Client.CmpConsultar(TipoCbte, PtoVta,CbteNro , ref sCAE,ref sVtoCAE);
             Console.WriteLine($"CAE: {sCAE}, Fecha CAE: {sVtoCAE}");
             Console.WriteLine($"GET CAE: {Client.GetNumeroCAE()}, Fecha CAE: {Client.GetVencimientoCAE()}");
+            Console.WriteLine($"{Client.XmlResponse}");
             if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             ////invocar agregafactura 

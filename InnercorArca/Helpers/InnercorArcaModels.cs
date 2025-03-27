@@ -22,7 +22,7 @@ namespace InnercorArca.V1.Helpers
             public DateTime ExpTime { get; set; }
         }
 
-
+        #region [Modelos Metodos CAE]
         public class CAEDetRequest
         {
 
@@ -88,8 +88,18 @@ namespace InnercorArca.V1.Helpers
 
 
         }
+        #endregion
 
+        #region [Modelos Metodos CAEA]
 
+        public enum MetCAEA : int
+        {
+            CAEACONSULTAR = 1,
+            CAEASOLICITAR = 2,
+            CAEINFORMAR = 3,
+        }
+
+        #endregion
 
     }
 }

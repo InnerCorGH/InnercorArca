@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Helpers\ClienteLoginCms.cs" />
     <Compile Include="Helpers\HelpersArca.cs" />
+    <Compile Include="Helpers\HelpersArcaCAEA.cs" />
     <Compile Include="InnercorARCA.cs" />
     <Compile Include="Helpers\Helpers.cs" />
     <Compile Include="Helpers\HelpersCert.cs" />

@@ -8,6 +8,7 @@
 /Console/obj
 /InnercorArca/bin/Debug
 /InnercorArca/obj
+/InnercorArca/Web References/*.*
 /packages/Portable.BouncyCastle.1.9.0
 *.pub
 /andalerba

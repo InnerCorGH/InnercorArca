@@ -1,6 +1,5 @@
 ﻿using InnercorArca.V1.Helpers;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -46,7 +45,7 @@ namespace InnercorArca.V1
         [DispId(11)]
         bool RecuperaLastCMP(int nPtoVta, int nTipCom, ref int nUltNro);
         [DispId(12)]
-        bool CmpConsultar(int nTipCom, int nPtoVta, long nNroCmp, ref string @cNroCAE, ref string @cVtoCAE);
+        bool CmpConsultar(int nTipCom, int nPtoVta, long nNroCmp, ref string cNroCAE, ref string cVtoCAE);
         [DispId(13)]
         void AgregaFactura(int nConcep, int nTipDoc, long nNroDoc, long nNroDes, long nNroHas, string cFchCom, double nImpTot, double nImpCon, double nImpNet, double nImpOpc, string cSerDes, string cSerHas, string cSerVto, string cMoneda, double nCotiza, int nCondIvaRec);
         [DispId(14)]
@@ -62,32 +61,34 @@ namespace InnercorArca.V1
 
         [DispId(18)]
         bool Autorizar(int nPtoVta, int nTipCom);
-
         [DispId(19)]
-        bool AutorizarRespuesta(int nIndice, out string @cNroCAE, ref string cVtoCAE, ref string cResult, ref string cReproc);
-
+        void AutorizarRespuesta(int nIndice, out string cNroCAE, ref string cVtoCAE, ref string cResult, ref string cReproc);
         [DispId(20)]
-        string GetVersion();
+        string AutorizarRespuestaObs(int nIndice);
 
         [DispId(21)]
-        string GetAppServerStatus();
+        string GetVersion();
 
         [DispId(22)]
-        string GetDbServerStatus();
+        string GetAppServerStatus();
+
         [DispId(23)]
-        string GetAuthServerStatus();
+        string GetDbServerStatus();
         [DispId(24)]
-        int GetUltimoNumero();
+        string GetAuthServerStatus();
         [DispId(25)]
-        string GetNumeroCAE();
+        int GetUltimoNumero();
         [DispId(26)]
-        string GetVencimientoCAE();
+        string GetNumeroCAE();
         [DispId(27)]
-        string GetResultado();
+        string GetVencimientoCAE();
         [DispId(28)]
+        string GetResultado();
+        [DispId(29)]
         string GetReprocesar();
 
-
+        [DispId(30)]
+        bool CAEAConsultar(int nPeriod, short nQuince, ref string cNroCAE, ref string dFchDes, ref string dFchHas, ref string dFchTop, ref string dFchPro);
     }
 
     /// <summary>
@@ -98,7 +99,7 @@ namespace InnercorArca.V1
     [ComVisible(true)]
     public class wsfev1 : IIwsfev1
     {
-
+        #region [Declaración Variables Públicas]
         readonly string dllPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         public int ErrorCode { get; private set; }
@@ -108,7 +109,13 @@ namespace InnercorArca.V1
         public string XmlResponse { get; private set; } = string.Empty;
         public string Excepcion { get; private set; } = string.Empty;
         public string TraceBack { get; private set; } = string.Empty;
+        //variables de paso Referencia que no los devuelve
+        public int UltimoNumero { get; set; }
 
+        public string Observaciones { get; set; }
+        #endregion
+
+        #region[Declaración Variables Internas]
         internal bool Produccion { get; private set; } = false;
         internal string PathCache { get; private set; } = string.Empty;
 
@@ -118,13 +125,12 @@ namespace InnercorArca.V1
         internal string Result { get; set; }
         internal string Reproc { get; set; }
 
+        internal string FechaDesde { get; set; }
+        internal string FechaHasta { get; set; }
+        internal string FechaTope { get; set; }
+        internal string FechaProceso { get; set; }
 
         internal InnercorArcaModels.CAEDetRequest CAEDetRequest { get; set; }
-        internal List<InnercorArcaModels.AlicIva> AlicIvas { get; set; }
-        internal List<InnercorArcaModels.Opcional> Opcionales { get; set; }
-        internal List<InnercorArcaModels.Tributo> Tributos { get; set; }
-        internal List<InnercorArcaModels.CbteAsoc> ComprobantesAsociados { get; set; }
-
 
 
         internal double Neto { get; set; }
@@ -141,9 +147,7 @@ namespace InnercorArca.V1
         internal string AppServerStatus_ { get; private set; } = string.Empty;
         internal string DbServerStatus_ { get; private set; } = string.Empty;
         internal string AuthServerStatus_ { get; private set; } = string.Empty;
-
-        //variables de paso Referencia que no los devuelve
-        public int UltimoNumero_ { get; set; }
+        #endregion
 
         public wsfev1()
         {
@@ -152,12 +156,11 @@ namespace InnercorArca.V1
             {
                 TkValido = new CacheResult();
             }
-            if (AlicIvas == null) AlicIvas = new List<InnercorArcaModels.AlicIva>(); // Initialize the list
-            if (Opcionales == null) Opcionales = new List<InnercorArcaModels.Opcional>(); // Initialize the list
-            if (Tributos == null) Tributos = new List<InnercorArcaModels.Tributo>(); // Initialize the list
-            if (ComprobantesAsociados == null) ComprobantesAsociados = new List<InnercorArcaModels.CbteAsoc>(); // Initialize the list
+            //SetError(0, "", "");
 
         }
+
+        #region [METODOS Consulta ARCA]
         public bool Login(string pathCRT, string pathKey, string urlWSAA)
         {
             try
@@ -256,9 +259,9 @@ namespace InnercorArca.V1
                 }
 
                 dynamic dummy = objDummy;
-                cAppServerStatus = "OK"; // dummy.AppServer??"OK";
-                cAuthServerStatus = "OK";// dummy.AuthServer??"OK";
-                cDbServerStatus = "OK"; // dummy.DbServer ?? "OK";
+                cAppServerStatus = dummy.AppServer ?? "OK";
+                cAuthServerStatus = dummy.AuthServer ?? "OK";
+                cDbServerStatus = dummy.DbServer ?? "OK";
 
                 AppServerStatus_ = cAppServerStatus;
                 AuthServerStatus_ = cAuthServerStatus;
@@ -268,8 +271,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                
-                SetError(Errors.EXCEPTION, ex.Message, ex.StackTrace );
+
+                SetError(Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
         }
@@ -286,16 +289,12 @@ namespace InnercorArca.V1
                 TraceBack = string.Empty;
 
 
-                NumeroCAE = string.Empty;
-                VencimientoCAE = DateTime.MinValue.ToString("yyyyMMdd");
+                //NumeroCAE = string.Empty;
+                //VencimientoCAE = DateTime.MinValue.ToString("yyyyMMdd");
                 Result = string.Empty;
-                Reproc = string.Empty;
+                //Reproc = string.Empty;
 
                 CAEDetRequest = null;
-                AlicIvas = null;
-                Opcionales = null;
-                Tributos = null;
-                ComprobantesAsociados = null;
 
                 Neto = 0;
                 Iva = 0;
@@ -350,18 +349,20 @@ namespace InnercorArca.V1
 
                 SetError((Errors)errCode, errDesc, $"RecuperaLastCMP Producción {Produccion} {objWSFEV1.GetType()}");
                 XmlResponse = xmlResponse;
-                UltimoNumero_ = nUltNro;
+                UltimoNumero = nUltNro;
                 return true;
             }
             catch (Exception ex)
             {
                 SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, ex.Message);
-                UltimoNumero_ = -1;
+                UltimoNumero = -1;
                 return false;
             }
         }
 
+        #endregion
 
+        #region [METODOS Autorización y CONUSLTA    CAE]
         //Devuelve CAE y FECHA de VTO segun Tipo COmprobante, PtoVta y Nro OCmp
         public bool CmpConsultar(int nTipCom, int nPtoVta, long nNroCmp, ref string cNroCAE, ref string cVtoCAE)
         {
@@ -424,7 +425,6 @@ namespace InnercorArca.V1
 
                 // Extraer el CAE y su fecha de vencimiento
                 cNroCAE = response.ResultGet.CodAutorizacion;
-
                 if (DateTime.TryParseExact(response.ResultGet.FchVto, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fechaVencimiento))
                 {
                     cVtoCAE = fechaVencimiento.ToString("yyyyMMdd");
@@ -447,12 +447,13 @@ namespace InnercorArca.V1
             }
         }
 
-
-
         public bool Autorizar(int nPtoVta, int nTipCom)
         {// llama al FECAESOlcicitar 
 
-
+            NumeroCAE = "";
+            VencimientoCAE = "";
+            Result = "";
+            Reproc = "";
             try
             {
                 object objWSFEV1 = null;
@@ -469,128 +470,307 @@ namespace InnercorArca.V1
 
                 if (Produccion)
                     AutorizarARCA(nPtoVta, nTipCom, objWSFEV1, out respuesta);
-                else                
+                else
                     AutorizarARCA_HOMO(nPtoVta, nTipCom, objWSFEV1, out respuesta);
-                
-                // Verificar la respuesta
-                string cae = ""; DateTime vtoCae = DateTime.MinValue; string result = ""; string reproc = ""; string xmlResponse = "";
-                HelpersArca.ProcesarRespuestaFactura(respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result, ref reproc);
 
+                // Verificar la respuesta
+                string cae = ""; string vtoCae = ""; string result = ""; string reproc = ""; string xmlResponse = ""; string observ = "";
+                HelpersArca.ProcesarRespuestaFactura(respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result, ref reproc, ref observ);
+
+                //Setear Valores a Devolver publicos
                 Result = result;
                 Reproc = reproc;
-                SetError((Errors)errCode, errDesc, $"Autorizar  {TraceBack}");
-
+                NumeroCAE = cae;
+                VencimientoCAE = vtoCae;
+                Observaciones = observ;
+                TraceBack = $"Autorizar {TraceBack}";
                 XmlResponse = xmlResponse;
+                ErrorCode = errCode;
+                ErrorDesc = errDesc;
 
-                return false;
+                return true;
+
             }
             catch (Exception ex)
-            { 
-                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message , $"{TraceBack} {ex.StackTrace}");
+            {
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
                 return false;
             }
         }
 
-
-        public bool AutorizarRespuesta(int nIndice, out string cNroCAE, ref string cVtoCAE, ref string cResult, ref string cReproc)
+        public void AutorizarRespuesta(int nIndice, out string cNroCAE, ref string cVtoCAE, ref string cResult, ref string cReproc)
         {
-            cNroCAE = "";
-            cVtoCAE = "";
+
+            cNroCAE = NumeroCAE;
+            cVtoCAE = VencimientoCAE;
+            cResult = Result;
+            cReproc = Reproc;
+
+        }
+
+        public string AutorizarRespuestaObs(int nIndice)
+        {
+            return Observaciones;
+
+        }
+        #endregion
+
+        #region [METODOS Autorización y consulta CAEA]
+        public bool CAEAConsultar(int nPeriod, short nQuince, ref string cNroCAE, ref string dFchDes, ref string dFchHas, ref string dFchTop, ref string dFchPro)
+        {
+            NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";
             try
             {
-                cResult = Result;
-                cReproc = Reproc;
-                XmlResponse = XmlResponse;
+                bool resp = HelpersArcaCAEA.MetodoCAEA(MetCAEA.CAEACONSULTAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
+                  out int errCode, out string errDesc, out string xmlResponse, out string trackBack);
+
+                SetError((Errors)errCode, errDesc, $"Errores Respuesta FECAEAConsultar {trackBack}");
+
+                NumeroCAE = cNroCAE;
+                FechaDesde = dFchDes;
+                FechaHasta = dFchHas;
+                FechaTope = dFchTop;
+                FechaProceso = dFchPro;
+                XmlResponse = HelpersArca.SerializeObjectAXml(xmlResponse);
 
 
-                if (Result == "A")
-                {
-                    cNroCAE = NumeroCAE;
-                    cVtoCAE = VencimientoCAE;
+                return resp;
+                ////obtiene token y sign del archivo cache
+                //if (TkValido == null)
+                //    TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache));
 
-                    return true;
-                }
-                else
-                {
-                    cNroCAE = "";
-                    cVtoCAE = "";
+                //// Configurar autenticación
+                //object auth;
+                //// Configurar la solicitud con los parámetros recibidos
+                //object objWSFEV1;
 
-                    return false;
+                //if (Produccion)
+                //{
+                //    objWSFEV1 = new Wsfev1.Service();
+                //    auth = new Wsfev1.FEAuthRequest();
+                //}
+                //else
+                //{
+                //    auth = new Wsfev1Homo.FEAuthRequest();
+                //    objWSFEV1 = new Wsfev1Homo.Service();
 
-                }
+                //}
+                //dynamic authData = auth;
+                //authData.Token = TkValido.Token;
+                //authData.Sign = TkValido.Sign;
+                //authData.Cuit = Convert.ToInt64(Cuit); // Reemplazar con el CUIT correcto
+
+
+                //dynamic response;
+                //if (Produccion)
+
+                //    response = ((dynamic)objWSFEV1).FECAEAConsultar((Wsfev1.FEAuthRequest)auth, nPeriod, nQuince);
+
+                //else
+                //    response = ((dynamic)objWSFEV1).FECAEAConsultar((Wsfev1Homo.FEAuthRequest)auth, nPeriod, nQuince);
+
+                //// Verificar errores en la respuesta
+                //if (response.Errors != null && response.Errors.Length > 0)
+                //{
+                //    int errCode = 0; string errDesc = ""; string xmlResponse = "";
+                //    HelpersArca.ProcesarRespuesta(response, ref errCode, ref errDesc, ref xmlResponse);
+                //    SetError((Errors)errCode, errDesc, "Errores Respuesta FECAEAConsultar");
+                //    XmlResponse = xmlResponse;
+                //    return false;
+                //}
+
+                //XmlResponse = HelpersArca.SerializeObjectAXml(response);
+                //// Extraer el CAE y las fechas
+                //return ExtractCAEADetails(response, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro);
+
             }
             catch (Exception ex)
-            { 
+            {
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+                return false;
+            }
+        }
+
+        public bool CAEASolicitar(int nPeriod, short nQuince, ref string cNroCAE, ref string dFchDes, ref string dFchHas, ref string dFchTop, ref string dFchPro)
+        {
+            NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";
+            try
+            {
+                bool resp = HelpersArcaCAEA.MetodoCAEA(MetCAEA.CAEASOLICITAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
+                     out int errCode, out string errDesc, out string xmlResponse, out string trackBack);
+
+                SetError((Errors)errCode, errDesc, $"Errores Respuesta FECAEASolicitar {trackBack}");
+
+                NumeroCAE = cNroCAE;
+                FechaDesde = dFchDes;
+                FechaHasta = dFchHas;
+                FechaTope = dFchTop;
+                FechaProceso = dFchPro;
+                XmlResponse = HelpersArca.SerializeObjectAXml(xmlResponse);
+
+
+                return resp;
+                //    //obtiene token y sign del archivo cache
+                //    if (TkValido == null)
+                //        TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache));
+
+                //    // Configurar autenticación
+                //    object auth;
+                //    // Configurar la solicitud con los parámetros recibidos
+                //    object objWSFEV1;
+
+                //    if (Produccion)
+                //    {
+                //        objWSFEV1 = new Wsfev1.Service();
+                //        auth = new Wsfev1.FEAuthRequest();
+                //    }
+                //    else
+                //    {
+                //        auth = new Wsfev1Homo.FEAuthRequest();
+                //        objWSFEV1 = new Wsfev1Homo.Service();
+
+                //    }
+                //    dynamic authData = auth;
+                //    authData.Token = TkValido.Token;
+                //    authData.Sign = TkValido.Sign;
+                //    authData.Cuit = Convert.ToInt64(Cuit); // Reemplazar con el CUIT correcto
+
+
+                //    dynamic response;
+                //    if (Produccion)
+                //        response = ((dynamic)objWSFEV1).FECAEASolicitar((Wsfev1.FEAuthRequest)auth, nPeriod, nQuince);
+
+                //    else
+                //        response = ((dynamic)objWSFEV1).FECAEASolicitar((Wsfev1Homo.FEAuthRequest)auth, nPeriod, nQuince);
+
+                //    // Verificar errores en la respuesta
+                //    if (response.Errors != null && response.Errors.Length > 0)
+                //    {
+                //        int errCode = 0; string errDesc = ""; string xmlResponse = "";
+                //        HelpersArca.ProcesarRespuesta(response, ref errCode, ref errDesc, ref xmlResponse);
+                //        SetError((Errors)errCode, errDesc, "Errores Respuesta FECAEASolicitar");
+                //        XmlResponse = xmlResponse;
+                //        return false;
+                //    }
+
+                //    // Extraer el CAE y las fechas                
+                //    return ExtractCAEADetails(response, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro);
+            }
+            catch (Exception ex)
+            {
                 SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
         }
 
 
+        #endregion
         public string GetVersion()
         {
-            return $"1.1.20"; // Cambia esto según tu versión actual
+            return $"1.1.36"; // Cambia esto según tu versión actual
         }
 
-        #region [Metodos Autirzacion directa ARCA]
+        #region [Metodos Autorización directa ARCA]
         private void AutorizarARCA(int nPtoVta, int nTipCom, object objWSFEV1, out object respuesta)
         {
-            var authProd = new Wsfev1.FEAuthRequest
+            try
             {
-                Token = TkValido.Token,
-                Sign = TkValido.Sign,
-                Cuit = Convert.ToInt64(Cuit)
-            };
+                TraceBack = "Linea 1";
+                var authProd = new Wsfev1.FEAuthRequest
+                {
+                    Token = TkValido.Token,
+                    Sign = TkValido.Sign,
+                    Cuit = Convert.ToInt64(Cuit)
+                };
 
-            Wsfev1.FECAECabRequest cabeceraProd = new Wsfev1.FECAECabRequest
+                Wsfev1.FECAECabRequest cabeceraProd = new Wsfev1.FECAECabRequest
+                {
+                    CantReg = 1,
+                    PtoVta = nPtoVta,
+                    CbteTipo = nTipCom,
+                };
+
+                TraceBack = "Linea 2";
+                // Convertir CAEDetRequest a FECAEDetRequest
+                Wsfev1.FECAEDetRequest detalleProd = new Wsfev1.FECAEDetRequest
+                {
+                    Concepto = CAEDetRequest.Concepto,
+                    DocTipo = CAEDetRequest.DocTipo,
+                    DocNro = CAEDetRequest.DocNro,
+                    CbteDesde = CAEDetRequest.CbteDesde,
+                    CbteHasta = CAEDetRequest.CbteHasta,
+                    CbteFch = CAEDetRequest.CbteFch,
+                    ImpTotal = CAEDetRequest.ImpTotal,
+                    ImpTotConc = CAEDetRequest.ImpTotConc,
+                    ImpNeto = CAEDetRequest.ImpNeto,
+                    ImpOpEx = CAEDetRequest.ImpOpEx,
+                    ImpIVA = CAEDetRequest.ImpIVA,
+                    ImpTrib = CAEDetRequest.ImpTrib,
+                    MonId = CAEDetRequest.MonId,
+                    MonCotiz = CAEDetRequest.MonCotiz,
+                    //MonCotizSpecified = true,
+                    //CondicionIVAReceptorId = CAEDetRequest.CondicionIvaReceptor
+                };
+
+                if (CAEDetRequest.Concepto == 2 || CAEDetRequest.Concepto == 3)
+                {
+                    TraceBack = "Linea 2.1";
+                    detalleProd.FchServDesde = CAEDetRequest.FchServDesde;
+                    detalleProd.FchServHasta = CAEDetRequest.FchServHasta;
+                    detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
+                }
+
+                TraceBack = "Linea 3";
+                if (CAEDetRequest.Iva != null && CAEDetRequest.Iva.Count() > 0)
+                {
+                    TraceBack = "Linea 3.1";
+                    detalleProd.Iva = CAEDetRequest.Iva.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
+                }
+
+                TraceBack = "Linea 4";
+                if (CAEDetRequest.ImpTrib > 0)
+                {
+                    TraceBack = "Linea 4.1";
+                    detalleProd.ImpTrib = CAEDetRequest.ImpTrib;
+                    detalleProd.Tributos = CAEDetRequest.Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
+                }
+
+                TraceBack = "Linea 5";
+                if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Length > 0)
+                {
+                    TraceBack = "Linea 5.1";
+                    detalleProd.CbtesAsoc = CAEDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
+                }
+
+                TraceBack = "Linea 6";
+                if (CAEDetRequest.Opcionales != null && CAEDetRequest.Opcionales.Length > 0)
+                {
+                    TraceBack = "Linea 6.1";
+                    detalleProd.Opcionales = CAEDetRequest.Opcionales.Select(opcional => (Wsfev1.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
+                }
+
+                TraceBack = "Linea 7";
+                var solicitudProd = new Wsfev1.FECAERequest
+                {
+                    FeCabReq = cabeceraProd, //CAbecera
+                    FeDetReq = new Wsfev1.FECAEDetRequest[] { detalleProd } //detalle
+                };
+
+                TraceBack = HelpersArca.SerializeObjectAXml(solicitudProd);
+
+                //invocar FECAESolicitar del  wsfev1 
+                objWSFEV1 = new Wsfev1Homo.Service();
+                respuesta = ((dynamic)objWSFEV1).FECAESolicitar(authProd, solicitudProd);
+                TraceBack = "Linea 8";
+            }
+            catch (Exception ex)
             {
-                CantReg = 1,
-                PtoVta = nPtoVta,
-                CbteTipo = nTipCom,
-
-            };
-
-            //Convertir CAEDetRequest a FECAEDetRequest
-            Wsfev1.FECAEDetRequest detalleProd = new Wsfev1.FECAEDetRequest
-            {
-                Concepto = CAEDetRequest.Concepto,
-                DocTipo = CAEDetRequest.DocTipo,
-                DocNro = CAEDetRequest.DocNro,
-                CbteDesde = CAEDetRequest.CbteDesde,
-                CbteHasta = CAEDetRequest.CbteHasta,
-                CbteFch = CAEDetRequest.CbteFch,
-                ImpTotal = CAEDetRequest.ImpTotal,
-                ImpTotConc = CAEDetRequest.ImpTotConc,
-                ImpNeto = CAEDetRequest.ImpNeto,
-                ImpOpEx = CAEDetRequest.ImpOpEx,
-                ImpIVA = CAEDetRequest.ImpIVA,
-                ImpTrib = CAEDetRequest.ImpTrib,
-                MonId = CAEDetRequest.MonId,
-                MonCotiz = CAEDetRequest.MonCotiz,
-                FchServDesde = CAEDetRequest.FchServDesde,
-                FchServHasta = CAEDetRequest.FchServHasta,
-                FchVtoPago = CAEDetRequest.FchVtoPago,
-
-                // Convertir listas a arrays correctamente
-                Iva = AlicIvas.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray(),
-                Tributos = Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray(),
-                Opcionales = Opcionales.Select(opcional => (Wsfev1.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray(),
-                CbtesAsoc = ComprobantesAsociados.Select(cbteAsoc => (Wsfev1.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray()
-
-
-            };
-
-            var solicitudProd = new Wsfev1.FECAERequest
-            {
-                FeCabReq = cabeceraProd, //CAbecera
-                FeDetReq = new Wsfev1.FECAEDetRequest[] { detalleProd } //detalle
-            };
-
-            //invocar FECAESolicitar del  wsfev1 
-            objWSFEV1 = new Wsfev1Homo.Service();
-            respuesta = ((dynamic)objWSFEV1).FECAESolicitar(authProd, solicitudProd);
-
+                TraceBack = ex.StackTrace;
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
+                respuesta = null;
+            }
         }
+
         private void AutorizarARCA_HOMO(int nPtoVta, int nTipCom, object objWSFEV1, out object respuesta)
         {
             try
@@ -627,50 +807,59 @@ namespace InnercorArca.V1
                     MonCotiz = CAEDetRequest.MonCotiz,
                     MonCotizSpecified = true,
                     MonId = CAEDetRequest.MonId,
-                    //CanMisMonExt = CAEDetRequest.CantidadMismaMonedaExt,
-                    FchServDesde = CAEDetRequest.FchServDesde,
-                    FchServHasta = CAEDetRequest.FchServHasta,
-                    FchVtoPago = CAEDetRequest.FchVtoPago,
+                    //CanMisMonExt = CAEDetRequest.CantidadMismaMonedaExt,                    
                     CondicionIVAReceptorId = CAEDetRequest.CondicionIvaReceptor
 
                 };
+                if (CAEDetRequest.Concepto == 2 || CAEDetRequest.Concepto == 3)
+                {
 
-
+                    TraceBack = "Linea 2.1";
+                    detalleProd.FchServDesde = CAEDetRequest.FchServDesde;
+                    detalleProd.FchServHasta = CAEDetRequest.FchServHasta;
+                }
+                if (CAEDetRequest.FchVtoPago.Length > 0) detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
 
                 TraceBack = "Linea 3";
                 if (Iva > 0)
                 {
                     TraceBack = "Linea 3.1";
-                    detalleProd.Iva = AlicIvas.Select(alicIva => (Wsfev1Homo.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
+                    detalleProd.Iva = CAEDetRequest.Iva.Select(alicIva => (Wsfev1Homo.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
                 }
                 TraceBack = "Linea 4";
                 if (CAEDetRequest.ImpTrib > 0)
                 {
+                    TraceBack = "Linea 4.1";
                     detalleProd.ImpTrib = CAEDetRequest.ImpTrib;
-                    detalleProd.Tributos = Tributos.Select(tributo => (Wsfev1Homo.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
+                    detalleProd.Tributos = CAEDetRequest.Tributos.Select(tributo => (Wsfev1Homo.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
                 }
                 TraceBack = "Linea 5";
-                if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Length > 0)
+                if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Count() > 0)
                 {
-                    detalleProd.CbtesAsoc = ComprobantesAsociados.Select(cbteAsoc => (Wsfev1Homo.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
+                    TraceBack = "Linea 5.1";
+                    detalleProd.CbtesAsoc = CAEDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1Homo.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
                 }
                 TraceBack = "Linea 6";
 
-                if (CAEDetRequest.Opcionales != null && CAEDetRequest.Opcionales.Length > 0)
+                if (CAEDetRequest.Opcionales != null && CAEDetRequest.Opcionales.Count() > 0)
                 {
-                    detalleProd.Opcionales = Opcionales.Select(opcional => (Wsfev1Homo.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
+                    TraceBack = "Linea 6.1";
+                    detalleProd.Opcionales = CAEDetRequest.Opcionales.Select(opcional => (Wsfev1Homo.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
                 }
+
+
                 TraceBack = "Linea 7";
                 var solicitudProd = new Wsfev1Homo.FECAERequest
                 {
                     FeCabReq = cabeceraProd, //CAbecera
                     FeDetReq = new Wsfev1Homo.FECAEDetRequest[] { detalleProd } //detalle
                 };
-                //TraceBack = HelpersArca.SerializeObjectAXml(solicitudProd);
+                TraceBack = HelpersArca.SerializeObjectAXml(solicitudProd);
+
                 //invocar FECAESolicitar del wsfev1 
                 objWSFEV1 = new Wsfev1Homo.Service();
                 respuesta = ((dynamic)objWSFEV1).FECAESolicitar(authProd, solicitudProd);
-                TraceBack = "7";
+                TraceBack = "Linea 8";
             }
             catch (Exception ex)
             {
@@ -683,10 +872,12 @@ namespace InnercorArca.V1
         #region[Metodos para Setear y Devolver valores ]
 
 
-        private void SetError(InnercorArcaModels.Errors errorCode, string errorDesc, string traceBack)
+        private void SetError(InnercorArcaModels.Errors codigoError, string descError, string traceBack)
         {
-            ErrorCode = (int)errorCode;
-            ErrorDesc = errorDesc;
+            ErrorCode = (int)codigoError;
+
+            ErrorDesc = codigoError == 0 ? "" : descError;
+
             TraceBack = traceBack;
         }
 
@@ -705,7 +896,24 @@ namespace InnercorArca.V1
 
         public int GetUltimoNumero()
         {
-            return UltimoNumero_;
+            return UltimoNumero;
+        }
+
+        public string GetFechaDesde()
+        {
+            return FechaDesde;
+        }
+        public string GetFechaHasta()
+        {
+            return FechaHasta;
+        }
+        public string GetFechaTope()
+        {
+            return FechaTope;
+        }
+        public string GetFechaProceso()
+        {
+            return FechaProceso;
         }
         public string GetNumeroCAE()
         {
@@ -739,7 +947,7 @@ namespace InnercorArca.V1
                 }
                 if (cSerDes.Length > 0 && !DateTime.TryParseExact(cSerDes, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha1))
                 {
-                    SetError(InnercorArcaModels.Errors.FORMAT_ERROR, "La fecha desde servicio debe estar en el formato 'yyyyMMdd'.","AgregaFactura 2");
+                    SetError(InnercorArcaModels.Errors.FORMAT_ERROR, "La fecha desde servicio debe estar en el formato 'yyyyMMdd'.", "AgregaFactura 2");
                     return;
                 }
                 if (cSerHas.Length > 0 && !DateTime.TryParseExact(cSerHas, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha2))
@@ -777,7 +985,7 @@ namespace InnercorArca.V1
                 };
             }
             catch (Exception ex)
-            { 
+            {
                 SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"CAEDetRequest {HelpersArca.SerializeObjectAXml(CAEDetRequest)}");
             }
 
@@ -787,18 +995,28 @@ namespace InnercorArca.V1
         {
             try
             {
-
-
                 InnercorArcaModels.AlicIva nuevaAlicuota = new InnercorArcaModels.AlicIva()
                 {
                     BaseImp = Math.Abs(importeBase),
-                    Id = (codigoAlicuota == 5) ? 5 : 4,
+                    Id = codigoAlicuota,
                     Importe = Math.Abs(importeIVA)
                 };
 
                 // Agregar la nueva alícuota a la lista de IVA
                 if (nuevaAlicuota != null)
-                    AlicIvas.Add((InnercorArcaModels.AlicIva)nuevaAlicuota);
+                {
+                    if (CAEDetRequest.Iva == null)
+                        CAEDetRequest.Iva = new InnercorArcaModels.AlicIva[0]; // Initialize the array
+
+                    // Create a new array with the new size
+                    var newArray = new InnercorArcaModels.AlicIva[CAEDetRequest.Iva.Length + 1];
+                    // Copy the existing elements to the new array
+                    Array.Copy(CAEDetRequest.Iva, newArray, CAEDetRequest.Iva.Length);
+                    // Add the new element to the new array
+                    newArray[newArray.Length - 1] = nuevaAlicuota;
+                    // Assign the new array back to the property
+                    CAEDetRequest.Iva = newArray;
+                }
 
                 // Acumular valores en la clase
                 Iva += importeIVA;
@@ -806,7 +1024,7 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad AliccIvas {AlicIvas.Count} : {codigoAlicuota} - {importeBase} - {importeIVA}");
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad AliccIvas {CAEDetRequest.Iva.Count()} : {codigoAlicuota} - {importeBase} - {importeIVA} .. {ex.StackTrace}");
             }
         }
 
@@ -820,13 +1038,25 @@ namespace InnercorArca.V1
                     Valor = valor
                 };
 
-                // Verificación adicional antes de agregar
+                // Verificación adicional antes de agregar 
                 if (nuevoOpcional != null)
-                    Opcionales.Add(nuevoOpcional);
+                {
+                    if (CAEDetRequest.Opcionales == null)
+                        CAEDetRequest.Opcionales = new InnercorArcaModels.Opcional[0]; // Initialize the array
+
+                    // Create a new array with the new size
+                    var newArray = new InnercorArcaModels.Opcional[CAEDetRequest.Opcionales.Length + 1];
+                    // Copy the existing elements to the new array
+                    Array.Copy(CAEDetRequest.Opcionales, newArray, CAEDetRequest.Opcionales.Length);
+                    // Add the new element to the new array
+                    newArray[newArray.Length - 1] = nuevoOpcional;
+                    // Assign the new array back to the property
+                    CAEDetRequest.Opcionales = newArray;
+                }
             }
             catch (Exception ex)
-            { 
-                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad Opcionales {Opcionales.Count}: {codigo} - {valor}");
+            {
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad Opcionales {CAEDetRequest.Opcionales.Count()}: {codigo} - {valor} .. {ex.StackTrace}");
             }
         }
         public void AgregaTributo(short codimp, string descri, double impbase, double alicuo, double import)
@@ -842,13 +1072,25 @@ namespace InnercorArca.V1
                     Importe = Math.Round(import, 2)
                 };
 
-                // Agregar el tributo a la lista de tributos del servicio
+                // Agregar el tributo a la lista de tributos del servicio 
                 if (nuevoTributo != null)
-                    Tributos.Add(nuevoTributo);
+                {
+                    if (CAEDetRequest.Tributos == null)
+                        CAEDetRequest.Tributos = new InnercorArcaModels.Tributo[0]; // Initialize the array
+
+                    // Create a new array with the new size
+                    var newArray = new InnercorArcaModels.Tributo[CAEDetRequest.Tributos.Length + 1];
+                    // Copy the existing elements to the new array
+                    Array.Copy(CAEDetRequest.Tributos, newArray, CAEDetRequest.Tributos.Length);
+                    // Add the new element to the new array
+                    newArray[newArray.Length - 1] = nuevoTributo;
+                    // Assign the new array back to the property
+                    CAEDetRequest.Tributos = newArray;
+                }
             }
             catch (Exception ex)
             {
-                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad Tributos {Tributos.Count} : {codimp} - {descri} - {impbase} - {alicuo} - {import}");
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad Tributos {CAEDetRequest.Tributos.Count()} : {codimp} - {descri} - {impbase} - {alicuo} - {import} .. {ex.StackTrace}");
             }
         }
 
@@ -872,16 +1114,31 @@ namespace InnercorArca.V1
                     CbteFch = dFchCmp//.ToString("yyyyMMdd") // Formato de fecha esperado por la API
                 };
 
-                // Agregar el comprobante asociado a la lista correspondiente dentro del servicio
+                // Agregar el comprobante asociado a la lista correspondiente dentro del servicio 
                 if (nuevoComprobanteAsociado != null)
-                    ComprobantesAsociados.Add(nuevoComprobanteAsociado);
+                {
+                    if (CAEDetRequest.ComprobantesAsociados == null)
+                        CAEDetRequest.ComprobantesAsociados = new InnercorArcaModels.CbteAsoc[0]; // Initialize the array
+
+                    // Create a new array with the new size
+                    var newArray = new InnercorArcaModels.CbteAsoc[CAEDetRequest.ComprobantesAsociados.Length + 1];
+                    // Copy the existing elements to the new array
+                    Array.Copy(CAEDetRequest.ComprobantesAsociados, newArray, CAEDetRequest.ComprobantesAsociados.Length);
+                    // Add the new element to the new array
+                    newArray[newArray.Length - 1] = nuevoComprobanteAsociado;
+                    // Assign the new array back to the property
+                    CAEDetRequest.ComprobantesAsociados = newArray;
+                }
             }
             catch (Exception ex)
-            { 
-                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad Comprobantes Asociados {ComprobantesAsociados.Count}: {nTipCmp} - {nPtoVta} - {nNroCmp} - {nNroCuit} - {dFchCmp} ");
+            {
+                SetError(InnercorArcaModels.Errors.EXCEPTION, ex.Message, $"Cantidad Comprobantes Asociados {CAEDetRequest.ComprobantesAsociados.Count()}: {nTipCmp} - {nPtoVta} - {nNroCmp} - {nNroCuit} - {dFchCmp} .. {ex.StackTrace} ");
             }
         }
         #endregion [MÉTODOS PARA COMPLETAR EL OBJETO ]
+
+
+
 
     }
 }

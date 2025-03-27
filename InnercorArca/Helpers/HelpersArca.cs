@@ -171,13 +171,11 @@ namespace InnercorArca.V1.Helpers
         }
         // Método auxiliar para manejar la respuesta de AFIP de una Solicitud de Factura
         public static void ProcesarRespuestaFactura(dynamic objResp, ref int errorCode, ref string errorDesc,
-            ref string xmlResponse, ref string cae, ref DateTime vtoCae, ref string result, ref string reProc)
+            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ )
         {
             try
             {
-                if (objResp.Errors != null)
-                    ProcesarRespuesta(objResp, ref errorCode, ref errorDesc, ref xmlResponse);
-
+                 
                 if (objResp.FeDetResp != null) //Solicitud procesada correctament
                 {
 
@@ -187,8 +185,11 @@ namespace InnercorArca.V1.Helpers
                     {
                         if (objResp.FeDetResp[0].Observaciones != null)
                         {
-                            errorCode = objResp.FeDetResp[0].Observaciones[0].Code;
-                            errorDesc = objResp.FeDetResp[0].Observaciones[0].Msg;
+                            //errorCode = objResp.FeDetResp[0].Observaciones[0].Code;
+                            //errorDesc = objResp.FeDetResp[0].Observaciones[0].Msg;
+
+                            observ = objResp.FeDetResp[0].Observaciones[0].Msg;
+
                         }
                         reProc = objResp.FeDetResp[0].Resultado;
                     }
@@ -199,15 +200,15 @@ namespace InnercorArca.V1.Helpers
                             var det = objResp.FeDetResp[i];
                             if (det != null)
                             {
-                                cae = det.CAE;
-                                vtoCae =(DateTime) det.FchVto;
+                                cae = det.CAE; 
+                                vtoCae = det.CAEFchVto;
                             }
                         }
 
                     }
                 }
 
-                //Procesar Observaciones dentro de FeDetResp
+                //Procesar Errors dentro de FeDetResp
                 if (objResp.Errors != null)
                 {
                     for (int i = 0; i < objResp.Errors.Length; i++)
@@ -220,7 +221,8 @@ namespace InnercorArca.V1.Helpers
                         }
                     }
                 }
-                //Porcesar Events dentro de FeDetResp
+              
+                //Procesar Events dentro de FeDetResp
                 if (objResp.Events != null)
                 {
                     for (int i = 0; i < objResp.Events.Length; i++)
@@ -233,11 +235,14 @@ namespace InnercorArca.V1.Helpers
                         }
                     }
                 }
+
+
+                xmlResponse = SerializeObjectAXml(objResp);
             }
             catch (Exception ex)
             {
-                throw ex;
-
+                errorCode = (int)Errors.EXCEPTION;
+                errorDesc =$"Exception {ex.Message}";
             }
         }
         private static Wsfev1.FEAuthRequest FEAuthRequest_Set(string Token, string Sign, long CUIT)

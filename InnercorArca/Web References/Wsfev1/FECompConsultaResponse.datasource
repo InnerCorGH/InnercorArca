@@ -6,5 +6,5 @@
     cause the file to be unrecognizable by the program.
 -->
 <GenericObjectDataSource DisplayName="FECompConsultaResponse" Version="1.0" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
-   <TypeInfo>InnercorArca.V1.Wsfev1.FECompConsultaResponse</TypeInfo>
+   <TypeInfo>InnercorArca.V1.Wsfev1.FECompConsultaResponse, Web References.Wsfev1.Reference.cs.dll, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</TypeInfo>
 </GenericObjectDataSource>

@@ -185,8 +185,11 @@ namespace InnercorArca.V1.Helpers
                     //si es rechazado el resultado de la solicitud
                     if (objResp.FeDetResp[0].Resultado == "R")
                     {
-                        errorCode = objResp.FeDetResp[0].Motivo;
-                        errorDesc = objResp.FeDetResp[0].Msg;
+                        if (objResp.FeDetResp[0].Observaciones != null)
+                        {
+                            errorCode = objResp.FeDetResp[0].Observaciones[0].Code;
+                            errorDesc = objResp.FeDetResp[0].Observaciones[0].Msg;
+                        }
                         reProc = objResp.FeDetResp[0].Resultado;
                     }
                     else//Solicitud procesada correctamente
@@ -197,7 +200,7 @@ namespace InnercorArca.V1.Helpers
                             if (det != null)
                             {
                                 cae = det.CAE;
-                                vtoCae = det.FchVto;
+                                vtoCae =(DateTime) det.FchVto;
                             }
                         }
 
@@ -205,15 +208,15 @@ namespace InnercorArca.V1.Helpers
                 }
 
                 //Procesar Observaciones dentro de FeDetResp
-                if (objResp.Observaciones != null)
+                if (objResp.Errors != null)
                 {
-                    for (int i = 0; i < objResp.Observaciones.Length; i++)
+                    for (int i = 0; i < objResp.Errors.Length; i++)
                     {
-                        var obs = objResp.Observaciones[i];
+                        var obs = objResp.Errors[i];
                         if (obs != null)
                         {
-                            errorCode += " " + obs.Code;
-                            errorDesc = " " + obs.Msg;
+                            errorCode =   obs.Code;
+                            errorDesc += $" {obs.Code} {obs.Msg} " ;
                         }
                     }
                 }
@@ -222,11 +225,11 @@ namespace InnercorArca.V1.Helpers
                 {
                     for (int i = 0; i < objResp.Events.Length; i++)
                     {
-                        var ev = objResp.Events[i];
+                        var ev = objResp.FeDetResp.Events[i];
                         if (ev != null)
                         {
-                            errorCode += " " + ev.Code;
-                            errorDesc = " " + ev.Msg;
+                            errorCode =   ev.Code;
+                            errorDesc += $" {ev.Code} {ev.Msg}" ;
                         }
                     }
                 }
@@ -345,5 +348,101 @@ namespace InnercorArca.V1.Helpers
                 return stringWriter.ToString();
             }
         }
+
+        public static object ConvertAlicIva(InnercorArca.V1.Helpers.InnercorArcaModels.AlicIva alicIva, bool produccion)
+        {
+            if (produccion)
+            {
+                return new Wsfev1.AlicIva
+                {
+                    BaseImp = alicIva.BaseImp,
+                    Importe = alicIva.Importe,
+                    Id = alicIva.Id
+                };
+            }
+            else
+            {
+                return new Wsfev1Homo.AlicIva
+                {
+                    BaseImp = alicIva.BaseImp,
+                    Importe = alicIva.Importe,
+                    Id = alicIva.Id
+                };
+            }
+        }
+
+        public static object ConvertirTributos(InnercorArca.V1.Helpers.InnercorArcaModels.Tributo tributo, bool produccion)
+        {
+            if (produccion)
+            {
+                return new Wsfev1.Tributo
+                {
+                    BaseImp = tributo.BaseImp,
+                    Alic = tributo.Alic,
+                    Importe = tributo.Importe,
+                    Id = tributo.Id,
+                    Desc = tributo.Desc
+                };
+            }
+            else
+            {
+                return new Wsfev1Homo.Tributo
+                {
+                    BaseImp = tributo.BaseImp,
+                    Alic = tributo.Alic,
+                    Importe = tributo.Importe,
+                    Id = tributo.Id,
+                    Desc = tributo.Desc
+                };
+            }
+        }
+
+        public static object ConvertirOpcionales(InnercorArca.V1.Helpers.InnercorArcaModels.Opcional opcional, bool produccion)
+        {
+            if (produccion)
+            {
+                return new Wsfev1.Opcional
+                {
+                    Id = opcional.Id,
+                    Valor = opcional.Valor
+                };
+            }
+            else
+            {
+                return new Wsfev1Homo.Opcional
+                {
+                    Id = opcional.Id,
+                    Valor = opcional.Valor
+                };
+            }
+        }
+
+        public static object ConvertirCompAsoc(InnercorArca.V1.Helpers.InnercorArcaModels.CbteAsoc cbteAsoc, bool produccion)
+        {
+            if (produccion)
+            {
+                return new Wsfev1.CbteAsoc
+                {
+                    Tipo = cbteAsoc.Tipo,
+                    PtoVta = cbteAsoc.PtoVta,
+                    Nro = cbteAsoc.Nro,
+                    Cuit = cbteAsoc.Cuit,
+                    CbteFch = cbteAsoc.CbteFch
+                };
+            }
+            else
+            {
+                return new Wsfev1Homo.CbteAsoc
+                {
+                    Tipo = cbteAsoc.Tipo,
+                    PtoVta = cbteAsoc.PtoVta,
+                    Nro = cbteAsoc.Nro,
+                    Cuit = cbteAsoc.Cuit,
+                    CbteFch = cbteAsoc.CbteFch
+                };
+            }
+        }
+
+
     }
 }

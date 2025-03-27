@@ -64,23 +64,38 @@ namespace Console_InnercorDLL
             int CbteNro = 0;
 
             Client.RecuperaLastCMP(PtoVta, TipoCbte, ref  CbteNro);
-            Console.WriteLine($"PtoVta: {PtoVta}, TipoCbte: {TipoCbte}, CbteNro: {CbteNro}");
+            Console.WriteLine($"PtoVta: {PtoVta}, TipoCbte: {TipoCbte}, Ultimo CbteNro: {CbteNro}");
             if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
             Console.WriteLine($"Ult Nro: {Client.GetUltimoNumero()}");
 
 
-            string sCAE=string.Empty;
-            string sVtoCAE = string.Empty;
-            Client.CmpConsultar(TipoCbte, PtoVta,CbteNro , ref sCAE,ref sVtoCAE);
-            Console.WriteLine($"CAE: {sCAE}, Fecha CAE: {sVtoCAE}");
-            Console.WriteLine($"GET CAE: {Client.GetNumeroCAE()}, Fecha CAE: {Client.GetVencimientoCAE()}");
-            Console.WriteLine($"{Client.XmlResponse}");
-            if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-
-            ////invocar agregafactura 
-            //Client.AgregaFactura(1, 1, 25657145, 1, 1, DateTime.Now, 100, 21, 21, 0, DateTime.Now, DateTime.Now, DateTime.Now, "PES", 1, 5);
+            //string sCAE=string.Empty;
+            //string sVtoCAE = string.Empty;
+            //Client.CmpConsultar(TipoCbte, PtoVta,CbteNro , ref sCAE,ref sVtoCAE);
+            //Console.WriteLine($"CAE: {sCAE}, Fecha CAE: {sVtoCAE}");
+            //Console.WriteLine($"GET CAE: {Client.GetNumeroCAE()}, Fecha CAE: {Client.GetVencimientoCAE()}");
+            //Console.WriteLine($"{Client.XmlResponse}");
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
+            ////invocar agregafactura 
+            Client.AgregaFactura(1, 96, 33198937, 22, 22, "20250327", 385872,0,318902.48, 0, "", "", "", "PES", 1, 5);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            Client.AgregaIVA(5, 318902.48, 66969.52);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            //Client.AgregaOpcional("2101", "SCA");
+            //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            //Client.AgregaTributo( );
+            //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            //Client.AgregaCompAsoc(TipoCbte, PtoVta, CbteNro);
+            //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            Client.Autorizar(99, 6);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            Console.WriteLine($"Trace { Client.TraceBack}");
         }
     }
 }

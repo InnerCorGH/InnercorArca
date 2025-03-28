@@ -10,7 +10,7 @@ namespace InnercorArca.V1.Helpers
     public class HelpersArca
     {
 
-        public static CacheResult GenerarCache(string pathCache, string cmsBase64)
+        public static CacheResult GenerarCache(string pathCache, string cmsBase64, string Service)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace InnercorArca.V1.Helpers
                 // Write to the file with the desired format for expiration time
                 File.WriteAllLines(pathCache, new string[]
                 {
-                $"{generatedTime:yyyyMMddHHmmss}",
+                $"{Service}!{generatedTime:yyyyMMddHHmmss}",
                 $"token={token}",
                 $"sign={sign}",
                 $"expTime={expirationDateTime.UtcDateTime:o}"
@@ -75,17 +75,34 @@ namespace InnercorArca.V1.Helpers
         }
 
 
-        public static string LeerCache(string pathCache)
+        public static string LeerCache(string pathCache, string service)
         {
 
             try
             {
-                //leer archivo.cache y devolver el contenido
-                return File.ReadAllText(pathCache);
+                // Leer archivo.cache y devolver el contenido
+                string cache = File.ReadAllText(pathCache);
+                string[] lines = cache.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+                // Iterar a través de las líneas para encontrar el servicio correcto
+                for (int i = 0; i < lines.Length; i += 4)
+                {
+                    string[] firstLineParts = lines[i].Split('!');
+                    if (firstLineParts.Length < 2 || !firstLineParts[0].Equals(service, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Retornar las cuatro líneas correspondientes al servicio
+                    return string.Join(Environment.NewLine, lines, i, 4);
+                }
+
+                // Si el servicio no se encuentra, retornar null
+                return null;
             }
             catch (Exception ex)
             {
-                throw new Exception($"PAth: {pathCache} - {ex.Message}") ;
+                throw new Exception($"Path: {pathCache} - {ex.Message}") ;
             }
         }
 
@@ -119,7 +136,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-        public static CacheResult RecuperarTokenSign(string cache)
+        public static CacheResult RecuperarTokenSign(string cache )
         {
             try
             {
@@ -159,7 +176,7 @@ namespace InnercorArca.V1.Helpers
                             errorDesc = " " + error.Msg;
                         }
                     }
-                    xmlResponse = SerializeToXml(objResp);
+                    xmlResponse = HelpersGlobal.SerializeToXml(objResp);
                     return;
                 }
             }
@@ -237,11 +254,11 @@ namespace InnercorArca.V1.Helpers
                 }
 
 
-                xmlResponse = SerializeObjectAXml(objResp);
+                xmlResponse = HelpersGlobal. SerializeObjectAXml(objResp);
             }
             catch (Exception ex)
             {
-                errorCode = (int)Errors.EXCEPTION;
+                errorCode = (int)GlobalSettings.Errors.EXCEPTION;
                 errorDesc =$"Exception {ex.Message}";
             }
         }
@@ -318,42 +335,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
         // Método genérico para serializar cualquier objeto a XML
-        public static string SerializeToXml<T>(T obj)
-        {
-            try
-            {
-                // Crear un serializador para el tipo T
-                XmlSerializer xmlSerializer = new XmlSerializer(typeof(T));
-
-                // Usar StringWriter para capturar el XML generado
-                using (StringWriter stringWriter = new StringWriter())
-                {
-                    // Serializar el objeto
-                    xmlSerializer.Serialize(stringWriter, obj);
-                    return stringWriter.ToString(); // Devuelve el XML como string
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-
-        }
-        public static string SerializeObjectAXml(object obj)
-        {
-            if (obj == null)
-            {
-                throw new ArgumentNullException(nameof(obj), "Objeto Null");
-            }
-
-            var xmlSerializer = new XmlSerializer(obj.GetType());
-            using (var stringWriter = new StringWriter())
-            {
-                xmlSerializer.Serialize(stringWriter, obj);
-                return stringWriter.ToString();
-            }
-        }
-
+    
         public static object ConvertAlicIva(InnercorArca.V1.Helpers.InnercorArcaModels.AlicIva alicIva, bool produccion)
         {
             if (produccion)

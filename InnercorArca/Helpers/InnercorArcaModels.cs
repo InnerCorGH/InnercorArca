@@ -1,20 +1,13 @@
-﻿using System;
+﻿using InnercorArca.V1.Wsfev1;
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace InnercorArca.V1.Helpers
 {
     public class InnercorArcaModels
     {
 
-        public enum Errors : int
-        {
-            CERT_ERROR = unchecked((int)100), // 0x8004xxxx (personalizado)
-            CONNECTION_ERROR = unchecked((int)200),
-            INVALID_PARAM = unchecked((int)300),
-            WSAA_ERROR = unchecked((int)400),
-            EXCEPTION = unchecked((int)500),
-            FORMAT_ERROR = unchecked((int)600),
-        }
-
+     
         public class CacheResult
         {
             public string Token { get; set; }
@@ -92,13 +85,28 @@ namespace InnercorArca.V1.Helpers
 
         #region [Modelos Metodos CAEA]
 
-        public enum MetCAEA : int
+      
+        public class CAEADetRequest: CAEDetRequest
         {
-            CAEACONSULTAR = 1,
-            CAEASOLICITAR = 2,
-            CAEINFORMAR = 3,
+            [MaxLength(14, ErrorMessage = "El CAEA no puede superar los 14 caracteres.")]
+            public string CAEA { get; set; }
+
+            [MaxLength(8, ErrorMessage = "Fecha y Hora de generación del comprobante por contingencia. Formato yyyymmddhhmiss.")]
+            public string CbteFchHsGen  { get; set; }
+            public Actividad Actividades { get; set; }
+            public Periodo Periodo_ { get; set; }
+
         }
 
+        public class Actividad
+        {
+            public int Id { get; set; }
+        }
+        public class Periodo
+        {
+            public string FchDesde { get; set; }
+            public string FchHasta { get; set; }
+        }
         #endregion
 
     }

@@ -6,7 +6,7 @@ namespace InnercorArca.V1.Helpers
     public static class HelpersArcaCAEA
     {
 
-        public static bool MetodoCAEA(MetCAEA accion, CacheResult tkValido, string pathCache, bool produccion, string Cuit,
+        public static bool MetodoCAEA(GlobalSettings.MetCAEA accion, CacheResult tkValido, string pathCache, bool produccion, string Cuit,
             int nPeriod, short nQuince, ref string cNroCAE, ref string dFchDes, ref string dFchHas, ref string dFchTop, ref string dFchPro,
              out int errCode, out string errDesc, out string xmlResponse, out string trackBack)
         {
@@ -14,7 +14,7 @@ namespace InnercorArca.V1.Helpers
             {
                 //obtiene token y sign del archivo cache
                 if (tkValido == null)
-                    tkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(pathCache));
+                    tkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(pathCache, GlobalSettings.ServiceARCA.wsfe.ToString()));
 
                 // Configurar autenticación
                 object auth;
@@ -41,7 +41,7 @@ namespace InnercorArca.V1.Helpers
                 dynamic response;
                 if (produccion)
                 {
-                    if (MetCAEA.CAEASOLICITAR == accion)
+                    if (GlobalSettings.MetCAEA.CAEASOLICITAR == accion)
                         response = ((dynamic)objWSFEV1).FECAEASolicitar((Wsfev1.FEAuthRequest)auth, nPeriod, nQuince);
                     else
                         response = ((dynamic)objWSFEV1).FECAEAConsultar((Wsfev1.FEAuthRequest)auth, nPeriod, nQuince);
@@ -50,7 +50,7 @@ namespace InnercorArca.V1.Helpers
 
                 else
                 {
-                    if (MetCAEA.CAEASOLICITAR == accion)
+                    if (GlobalSettings.MetCAEA.CAEASOLICITAR == accion)
                         response = ((dynamic)objWSFEV1).FECAEASolicitar((Wsfev1Homo.FEAuthRequest)auth, nPeriod, nQuince);
                     else
                         response = ((dynamic)objWSFEV1).FECAEAConsultar((Wsfev1Homo.FEAuthRequest)auth, nPeriod, nQuince);
@@ -62,14 +62,14 @@ namespace InnercorArca.V1.Helpers
                 {
                     errCode = 0; errDesc = ""; xmlResponse = "";
                     HelpersArca.ProcesarRespuesta(response, ref errCode, ref errDesc, ref xmlResponse);
-                    trackBack = "Error Método CAEA";
+                    trackBack = $"Error Método CAEA {accion}";
 
                     return false;
                 }
 
                 errCode = 0;
                 errDesc = null;
-                xmlResponse = HelpersArca.SerializeObjectAXml(response);
+                xmlResponse = HelpersGlobal.SerializeObjectAXml(response);
                 trackBack = "Método CAEA";
 
                 // Extraer el CAE y las fechas                
@@ -77,7 +77,7 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception ex)
             {
-                errCode = (int)Errors.EXCEPTION;
+                errCode = (int)GlobalSettings.Errors.EXCEPTION;
                 errDesc = ex.Message;
                 trackBack = ex.StackTrace;
                 xmlResponse = null;

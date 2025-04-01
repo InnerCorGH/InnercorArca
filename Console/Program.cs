@@ -50,10 +50,15 @@ namespace Console_InnercorDLL
             ;
 
             object oCont = null;
+             //Client.Consultar("25657140", ref oCont); //Monotirbuto 
+            //Client.Consultar("33710525809", ref oCont); // Resp Inscripto
+            //Client.Consultar("44433967", ref oCont);//Cons final
+            Client.Consultar("27046394106", ref oCont); // Cons final
+            //Client.Consultar("59302332", ref oCont); //COnsumidor FInal
+//            Client.Consultar("30669387128", ref oCont);//Exento
+//Client.Consultar("47711304", ref oCont);//Exento
+//Client.Consultar("6533114", ref oCont);//Fallecido 
 
-            //Client.Consultar("25657140", ref oCont);
-            //Client.Consultar("33710525809", ref oCont);
-                        Client.Consultar("44433967", ref oCont);
             if (Client.ErrorCode != 0)
                 Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
             else
@@ -62,9 +67,12 @@ namespace Console_InnercorDLL
                 if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
                 PrintProperties(oCont2);
 
+                //Console.WriteLine( oCont2.ActividadesCount());
+                
+
                 object oContD = Client.GetDomicilio();
                 PrintProperties(oContD);
-                 
+
             }
         }
 

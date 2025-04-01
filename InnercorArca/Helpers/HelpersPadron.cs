@@ -1,4 +1,5 @@
-﻿using InnercorArca.V1.ModelsCOM;
+﻿using InnercorArca.V1.Aws;
+using InnercorArca.V1.ModelsCOM;
 using System;
 using System.Collections.Generic;
 using System.EnterpriseServices.CompensatingResourceManager;
@@ -14,16 +15,16 @@ namespace InnercorArca.V1.Helpers
             if (impuestos == null || impuestos.Length == 0)
                 return (int)GlobalSettings.CondicionIVA.SinDatos;
 
-            if (Array.Exists(impuestos, i => i.Codigo == "30"))
+            if (Array.Exists(impuestos, i => i.Codigo == 30))
                 return (int)GlobalSettings.CondicionIVA.ResponsableInscripto;
 
-            if (Array.Exists(impuestos, i => i.Codigo == "20"))
+            if (Array.Exists(impuestos, i => i.Codigo == 20))
                 return (int)GlobalSettings.CondicionIVA.ResponsableMonotributo;
 
             return (int)GlobalSettings.CondicionIVA.IvaSujetoExento;
         }
 
-        public static ContribuyenteCOM MapToContribuyenteCOM(dynamic datosGenerales, string service)
+        public static ContribuyenteCOM MapToContribuyenteCOM(dynamic datosGenerales )
         {
 
             if (datosGenerales == null)
@@ -38,8 +39,12 @@ namespace InnercorArca.V1.Helpers
                 {
                     Apellido = datosGenerales.apellido,
                     NombreSimple = datosGenerales.nombre,
-                    CondicionIva = ((int)GlobalSettings.CondicionIVA.ConsumidorFinal).ToString(),
+                    CondicionIva = (int)GlobalSettings.CondicionIVA.ConsumidorFinal,
                     CondicionIvaDesc = GlobalSettings.CondicionIVA.ConsumidorFinal.ToString(),
+                    TipoDocumento="NO DISPONIBLE",
+                    NumeroDocumento="NO DISPONIBLE",
+                    DomicilioFiscal = new DomicilioCOM(),
+                    IdPersona= datosGenerales.idPersona.ToString()
                 };
 
             }
@@ -48,47 +53,74 @@ namespace InnercorArca.V1.Helpers
             var Datos = datosGenerales;
             datosGenerales = Datos.datosGenerales;
 
-
-
             try
             {
                 #region [Datos Persona]
                 var contribuyenteCOM = new ContribuyenteCOM
                 {
                     Apellido = datosGenerales.apellido,
-                    Nombre = service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString() ? datosGenerales.razonSocial : datosGenerales.nombre,
-                    NombreSimple = service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString() ? "" : datosGenerales.nombre,
-                    IdPersona = datosGenerales.idPersona,
+                    Nombre = datosGenerales.razonSocial ?? "",
+                    NombreSimple = datosGenerales.nombre,
+                    IdPersona = datosGenerales.idPersona.ToString(),
                     MesCierre = datosGenerales.mesCierre,
 
                     TipoClave = datosGenerales.tipoClave,
+                    EstadoClave = datosGenerales.estadoClave,
                     TipoPersona = datosGenerales.tipoPersona,
-                    TipoDocumento = service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString() ? datosGenerales.tipoDocumento : "",
-                    NumeroDocumento = service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString() ? datosGenerales.numeroDocumento : "",
 
                     EsSucesion = datosGenerales.esSucesion,
-                    FechaFallecimiento = datosGenerales.fechaFallecimiento.ToString(),
-                    FechaInscripcion = datosGenerales.fechaContratoSocial.ToString(),
+                    FechaFallecimiento = datosGenerales.fechaFallecimiento.ToString("yyyyMMdd"),
+                    FechaInscripcion = datosGenerales.fechaContratoSocial.ToString("yyyyMMdd"),
                     //IdCatAutonomo = datosGenerales.idCatAutonomo,
-                    //IdDependencia = datosGenerales.idDependencia,
+                    IdDependencia = datosGenerales.dependencia,
                     //SolicitarConstanciaInscripcion = datosGenerales.solicitarConstanciaInscripcion
 
                 };
-
-                var domiciliosList = new List<InnercorArca.V1.Aws.domicilio> { datosGenerales.domicilioFiscal };
-                HelperContribuyenteCOM.CargarDomicilioFiscal(domiciliosList, contribuyenteCOM);
-
-
                 #endregion
-                #region [Datos  ]
+                #region[Documento Tipo y Nro ]
+                if (contribuyenteCOM.TipoPersona == "FISICA")
+                {
+                    // Check if datosGenerales contains the property tipoDocumento
+                    if (datosGenerales is IDictionary<string, object> dict && dict.ContainsKey("tipoDocumento"))
+                    {
+                        contribuyenteCOM.TipoDocumento = datosGenerales.tipoDocumento;
+                    }
+                    else
+                    {
+                        contribuyenteCOM.TipoDocumento = "NO DISPONIBLE";
+                    }
+                    // Check if datosGenerales contains the property tipoDocumento
+                    if (datosGenerales is IDictionary<string, object> dict1 && dict1.ContainsKey("numeroDocumento"))
+                    {
+                        contribuyenteCOM.NumeroDocumento = datosGenerales.numeroDocumento.ToString();
+                    }
+                    else
+                    {
+                        contribuyenteCOM.NumeroDocumento = "NO DISPONIBLE";
+                    }
+                }
+                else
+                {
+                    contribuyenteCOM.TipoDocumento = datosGenerales.tipoClave;
+                    contribuyenteCOM.NumeroDocumento = datosGenerales.idPersona.ToString();
+                }
+                #endregion
+
+                #region [Domicilio Fiscal]
+                if (datosGenerales.domicilioFiscal != null)
+                {
+                    var domiciliosList = new List<Aws.domicilio> { datosGenerales.domicilioFiscal };
+                    HelperContribuyenteCOM.CargarDomicilioFiscal(domiciliosList, contribuyenteCOM);
+                }
+                #endregion
+
+                #region [Datos Regimen IVA ]
                 if (Datos.datosMonotributo != null)
                 {
-
-
                     ///Categoria Monotributo 
                     CategoriaMonotributoCOM Cat = new CategoriaMonotributoCOM
                     {
-                        Categoria = Datos.datosMonotributo.categoriaMonotributo.idCategoria.ToString(),
+                        Categoria = Datos.datosMonotributo.categoriaMonotributo.idCategoria,
                         Descripcion = Datos.datosMonotributo.categoriaMonotributo.descripcionCategoria
                     };
 
@@ -105,7 +137,7 @@ namespace InnercorArca.V1.Helpers
                     //Actividades
                     ActividadCOM Act = new ActividadCOM
                     {
-                        Codigo = Datos.datosMonotributo.actividadMonotributista.idActividad.ToString(),
+                        Codigo = Datos.datosMonotributo.actividadMonotributista.idActividad,
                         Descripcion = Datos.datosMonotributo.actividadMonotributista.descripcionActividad
                     };
 
@@ -113,7 +145,7 @@ namespace InnercorArca.V1.Helpers
                     Acts[0] = Act;
                     contribuyenteCOM.SetActividades(Acts);
 
-                    contribuyenteCOM.CondicionIva = ((int)GlobalSettings.CondicionIVA.ResponsableMonotributo).ToString();
+                    contribuyenteCOM.CondicionIva = (int)GlobalSettings.CondicionIVA.ResponsableMonotributo;
                     contribuyenteCOM.CondicionIvaDesc = GlobalSettings.CondicionIVA.ResponsableMonotributo.ToString();
 
                 }
@@ -121,31 +153,32 @@ namespace InnercorArca.V1.Helpers
                 {
 
 
-                    if (Datos.datosRegimenGeneral.categoriaAutonomo != null)
+                    if (Datos.datosRegimenGeneral != null)
                     {
-                        //HelperContribuyenteCOM.CargarCategoriasMonotributo(Datos.datosRegimenGeneral.categoriaAutonomo, contribuyenteCOM);
-                        contribuyenteCOM.IdCatAutonomo = Datos.datosRegimenGeneral.categoriaAutonomo.ToString();
+                        if (Datos.datosRegimenGeneral.categoriaAutonomo != null) 
+                            contribuyenteCOM.IdCatAutonomo = Datos.datosRegimenGeneral.categoriaAutonomo.ToString(); 
+                        //IMpuestos 
+                        var impuestosList_ = new List<Aws.impuesto>(Datos.datosRegimenGeneral.impuesto);
+                        var Impuestos_ = HelperContribuyenteCOM.CargarImpuestos(impuestosList_, contribuyenteCOM);
+
+
+                        var actividadesList_ = new List<Aws.actividad>(Datos.datosRegimenGeneral.actividad);
+                        HelperContribuyenteCOM.CargarActividades(actividadesList_, contribuyenteCOM);
+
+                        // Interpretar la condición IVA
+                        contribuyenteCOM.CondicionIva = InterpretarCondicionIVA(Impuestos_);
+                        contribuyenteCOM.CondicionIvaDesc = ((GlobalSettings.CondicionIVA)contribuyenteCOM.CondicionIva).ToString();
                     }
-                    //IMpuestos 
-                    var impuestosList_ = new List<Aws.impuesto>(Datos.datosRegimenGeneral.impuesto);
-                    var Impuestos_ = HelperContribuyenteCOM.CargarImpuestos(impuestosList_, contribuyenteCOM);
+                    else
+                    {
+                        contribuyenteCOM.CondicionIva =(int) GlobalSettings.CondicionIVA.ConsumidorFinal;
+                        contribuyenteCOM.CondicionIvaDesc = GlobalSettings.CondicionIVA.ConsumidorFinal .ToString();
 
-
-                    var actividadesList_ = new List<Aws.actividad>(Datos.datosRegimenGeneral.actividad);
-                    HelperContribuyenteCOM.CargarActividades(actividadesList_, contribuyenteCOM);
-
-                    // Interpretar la condición IVA
-                    contribuyenteCOM.CondicionIva = InterpretarCondicionIVA(Impuestos_).ToString();
-                    contribuyenteCOM.CondicionIvaDesc = ((GlobalSettings.CondicionIVA)Int32.Parse(contribuyenteCOM.CondicionIva)).ToString();
-
+                    }
 
                 }
 
                 #endregion
-
-
-
-
 
                 return contribuyenteCOM;
             }

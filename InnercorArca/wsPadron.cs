@@ -1,6 +1,7 @@
 ﻿using InnercorArca.V1.Helpers;
 using InnercorArca.V1.ModelsCOM;
 using Microsoft.Win32;
+using Org.BouncyCastle.Security;
 using System;
 using System.IO;
 using System.Net;
@@ -171,27 +172,30 @@ namespace InnercorArca.V1
                 dynamic response = null;
                 bool success = false;
 
+                if (nCuit.Length > 11)
+                {
+                    return success;
+                }
+
                 if (nCuit.Length != 11)
                 {
                     string cuitM = HelpersCUIT.GenerarCUIT(Convert.ToInt64(nCuit), true, "M");
                     string cuitF = HelpersCUIT.GenerarCUIT(Convert.ToInt64(nCuit), true, "F");
 
-                    success = TryGetPersona(cuitM, ref response, service) || TryGetPersona(cuitF, ref response, service);
+                    success = TryGetPersona(cuitM, ref response) || TryGetPersona(cuitF, ref response);
                 }
                 else
                 {
-                    success = TryGetPersona(nCuit, ref response, service);
-
-
+                    success = TryGetPersona(nCuit, ref response);
                 }
 
                 if (!success)
-                { 
+                {
                     return false;
                 }
 
 
-                oContrib = HelpersPadron.MapToContribuyenteCOM(response, service);
+                oContrib = HelpersPadron.MapToContribuyenteCOM(response);
                 Contribuyente = (ContribuyenteCOM)oContrib;
 
                 return true;
@@ -206,53 +210,50 @@ namespace InnercorArca.V1
         #endregion
 
         #region [Métodos Internos ] 
-        private bool TryGetPersona(string cuit, ref dynamic response, string service)
+        private bool TryGetPersona(string cuit, ref dynamic response )
         {
             try
             {
 
 
-                if (service == GlobalSettings.ServiceARCA.ws_sr_padron_a5.ToString() || service == GlobalSettings.ServiceARCA.ws_sr_constancia_inscripcion.ToString())
+
+                if (Produccion)
                 {
-                    if (Produccion)
-                    {
-                        var client = new Aws.PersonaServiceA5();
-                        response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
-                    }
-                    else
-                    {
-                        var client = new Awshomo.PersonaServiceA5();
-                        response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
-                    }
-
-
-                    if (response.errorConstancia != null || response.errorMonotributo != null || response.errorRegimenGeneral != null)
-                    {
-                        string errorDesc = "";
-                        if (response.errorConstancia != null)
-                        {
-                            if  (response.errorConstancia.error[0].Contains("La clave  no registra Apellido y/o Nombre informados"))
-                            {
-                                response = response.errorConstancia;
-                                return true;
-                            }
-                            else
-                            {
-
-                            }
-                        }
-                            
-                        if (response.errorMonotributo != null) errorDesc += response.errorMonotributo;
-                        if (response.errorRegimenGeneral != null) errorDesc += response.errorRegimenGeneral;
-
-                        SetError(GlobalSettings.Errors.GET_ERROR, errorDesc, "Errores Respuesta Consultar");
-                        return false;
-                    }
+                    var client = new Aws.PersonaServiceA5();
+                    response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
                 }
                 else
                 {
+                    //var client = new Awshomo.PersonaServiceA5();
+                    //response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
+                }
+
+
+                if (response.errorConstancia != null || response.errorMonotributo != null || response.errorRegimenGeneral != null)
+                {
+                    string errorDesc = "";
+                    if (response.errorConstancia != null)
+                    {
+                        if (response.errorConstancia.apellido.Length > 0)
+
+                        //if  (response.errorConstancia.error[0].Contains("La clave  no registra Apellido y/o Nombre informados"))
+                        {
+                            response = response.errorConstancia;
+                            return true;
+                        }
+                        else
+                        {
+                            errorDesc = response.errorConstancia[0].error;
+                        }
+                    }
+
+                    if (response.errorMonotributo != null) errorDesc += response.errorMonotributo;
+                    if (response.errorRegimenGeneral != null) errorDesc += response.errorRegimenGeneral;
+
+                    SetError(GlobalSettings.Errors.GET_ERROR, errorDesc, "Errores Respuesta Consultar");
                     return false;
                 }
+
 
 
 
@@ -286,7 +287,8 @@ namespace InnercorArca.V1
         {
             try
             {
-                return Contribuyente.DomicilioFiscal;
+                if (Contribuyente.DomicilioFiscal != null) return Contribuyente.DomicilioFiscal;
+                return null;
             }
             catch (Exception ex)
             {

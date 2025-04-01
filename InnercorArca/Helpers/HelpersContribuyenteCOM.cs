@@ -15,7 +15,7 @@ public static class HelperContribuyenteCOM
         {
             categorias[i] = new CategoriaMonotributoCOM
             {
-                Categoria = source[i].idCategoria.ToString(),
+                Categoria = source[i].idCategoria,
                 Descripcion = source[i].descripcionCategoria
             };
         }
@@ -35,7 +35,7 @@ public static class HelperContribuyenteCOM
             impuestos[i] = new ImpuestoCOM
             {
                 Nombre = source[i].descripcionImpuesto,
-                Codigo = source[i].idImpuesto.ToString()
+                Codigo = source[i].idImpuesto
             };
         }
 
@@ -54,7 +54,7 @@ public static class HelperContribuyenteCOM
         {
             actividades[i] = new ActividadCOM
             {
-                Codigo = source[i].idActividad.ToString(),
+                Codigo = source[i].idActividad,
                 Descripcion = source[i].descripcionActividad.ToString(),
             };
         }
@@ -103,13 +103,14 @@ public static class HelperContribuyenteCOM
             {
 
                 CodPostal = source[i].codPostal,
-                DatoAdicional = source[i].datoAdicional,
-                DescripcionProvincia = source[i].descripcionProvincia,
+                //DatoAdicional = source[i].datoAdicional,
+                Provincia = source[i].descripcionProvincia,
                 Direccion = source[i].direccion,
                 IdProvincia = source[i].idProvincia.ToString(),
+
                 Localidad = source[i].localidad,
-                TipoDatoAdicional = source[i].tipoDatoAdicional,
-                TipoDomicilio = source[i].tipoDomicilio
+                //TipoDatoAdicional = source[i].tipoDatoAdicional,
+                //TipoDomicilio = source[i].tipoDomicilio
             };
 
         }

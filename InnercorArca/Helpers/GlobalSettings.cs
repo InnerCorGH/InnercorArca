@@ -47,7 +47,7 @@ namespace InnercorArca.V1.Helpers
             ResponsableInscripto = 1,
             NoResponsable = 2,
             IvaSujetoExento = 4,
-            CondumidorFinal = 5,
+            ConsumidorFinal = 5,
             ResponsableMonotributo = 6,
             SinDatos
 

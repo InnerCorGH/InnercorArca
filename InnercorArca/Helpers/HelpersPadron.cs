@@ -1,47 +1,52 @@
 ﻿using InnercorArca.V1.ModelsCOM;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.EnterpriseServices.CompensatingResourceManager;
+using System.Security.Cryptography;
 
 namespace InnercorArca.V1.Helpers
 {
     public static class HelpersPadron
     {
 
-        public static int InterpretarCondicionIVA(List<ImpuestoCOM> impuestos)
+        public static int InterpretarCondicionIVA(ImpuestoCOM[] impuestos)
         {
-            if (impuestos == null || impuestos.Count == 0)
+            if (impuestos == null || impuestos.Length == 0)
                 return (int)GlobalSettings.CondicionIVA.SinDatos;
 
-            // Buscamos IVA (impuesto 30)
-            var iva = impuestos.FirstOrDefault(i => i.Codigo == "30"  );
-            if (iva != null)
+            if (Array.Exists(impuestos, i => i.Codigo == "30"))
                 return (int)GlobalSettings.CondicionIVA.ResponsableInscripto;
 
-            // Buscamos Monotributo (impuesto 20)
-            var mono = impuestos.FirstOrDefault(i => i.Codigo == "20" );
-            if (mono != null)
-                return (int) GlobalSettings.CondicionIVA.ResponsableMonotributo;
+            if (Array.Exists(impuestos, i => i.Codigo == "20"))
+                return (int)GlobalSettings.CondicionIVA.ResponsableMonotributo;
 
-            // Si no tiene ninguno de los dos, lo marcamos como Exento / No Responsable
-            return (int) GlobalSettings.CondicionIVA.IvaSujetoExento;
+            return (int)GlobalSettings.CondicionIVA.IvaSujetoExento;
         }
 
-
-        public static ContribuyenteCOM MapToContribuyenteCOMAsync(dynamic datosGenerales, string service)
+        public static ContribuyenteCOM MapToContribuyenteCOM(dynamic datosGenerales, string service)
         {
 
             if (datosGenerales == null)
                 return null;
+
+
+            // Check if datosGenerales is of type aws.errorConstancia
+            if (datosGenerales is Aws.errorConstancia)
+            {
+                // Handle the presence of errorConstancia 
+                return new ContribuyenteCOM
+                {
+                    Apellido = datosGenerales.apellido,
+                    NombreSimple = datosGenerales.nombre,
+                    CondicionIva = ((int)GlobalSettings.CondicionIVA.ConsumidorFinal).ToString(),
+                    CondicionIvaDesc = GlobalSettings.CondicionIVA.ConsumidorFinal.ToString(),
+                };
+
+            }
+
+
             var Datos = datosGenerales;
-
-
-            if (service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString())
-                datosGenerales = Datos.persona;
-            else
-                datosGenerales = Datos.datosGenerales;
+            datosGenerales = Datos.datosGenerales;
 
 
 
@@ -61,118 +66,87 @@ namespace InnercorArca.V1.Helpers
                     TipoDocumento = service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString() ? datosGenerales.tipoDocumento : "",
                     NumeroDocumento = service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString() ? datosGenerales.numeroDocumento : "",
 
-                    DomicilioFiscal = new List<DomicilioCOM>(), // Initialize the list
-                    Actividades = new List<ActividadCOM>(), // Initialize the list
-                    CategoriasMonotributo = new List<CategoriaMonotributoCOM>(), // Initialize the list
-                    ImpuestosCOM = new List<ImpuestoCOM>(),// Initialize the list
-                    ActividadesCount = 0,
-                    CategoriasMonotributoCount = 0,
-                    ImpuestosCount = 0
+                    EsSucesion = datosGenerales.esSucesion,
+                    FechaFallecimiento = datosGenerales.fechaFallecimiento.ToString(),
+                    FechaInscripcion = datosGenerales.fechaContratoSocial.ToString(),
+                    //IdCatAutonomo = datosGenerales.idCatAutonomo,
+                    //IdDependencia = datosGenerales.idDependencia,
+                    //SolicitarConstanciaInscripcion = datosGenerales.solicitarConstanciaInscripcion
 
                 };
-                //if (contribuyenteCOM.TipoClave == "CUIT") { 
-                //    contribuyenteCOM.CondicionIva =  AfipApiService.ObtenerCondicionIVA(contribuyenteCOM.IdPersona).Result;
-                //}
+
+                var domiciliosList = new List<InnercorArca.V1.Aws.domicilio> { datosGenerales.domicilioFiscal };
+                HelperContribuyenteCOM.CargarDomicilioFiscal(domiciliosList, contribuyenteCOM);
 
 
                 #endregion
-                #region [Datos Domicilio]
-
-                if (service == GlobalSettings.ServiceARCA.ws_sr_padron_a13.ToString())
+                #region [Datos  ]
+                if (Datos.datosMonotributo != null)
                 {
-                    if (datosGenerales.domicilio != null)
+
+
+                    ///Categoria Monotributo 
+                    CategoriaMonotributoCOM Cat = new CategoriaMonotributoCOM
                     {
-                        foreach (var dom in datosGenerales.domicilio)
-                        {
-                            DomicilioCOM Dom = new DomicilioCOM
-                            {
-                                CodPostal = dom.codigoPostal,
-                                DatoAdicional = dom.datoAdicional,
-                                DescripcionProvincia = dom.descripcionProvincia,
-                                Direccion = dom.direccion,
-                                IdProvincia = dom.idProvincia,
-                                Localidad = dom.localidad,
-                                TipoDatoAdicional = dom.tipoDatoAdicional,
-                                TipoDomicilio = dom.tipoDomicilio
-                            };
-                            contribuyenteCOM.DomicilioFiscal.Add(Dom);
-                        }
-                    }
+                        Categoria = Datos.datosMonotributo.categoriaMonotributo.idCategoria.ToString(),
+                        Descripcion = Datos.datosMonotributo.categoriaMonotributo.descripcionCategoria
+                    };
+
+                    CategoriaMonotributoCOM[] CAts = new CategoriaMonotributoCOM[1];
+                    CAts[0] = Cat;
+
+                    contribuyenteCOM.SetCategoriasMonotributo(CAts);
+
+
+                    //IMpuestos 
+                    var impuestosList = new List<Aws.impuesto>(Datos.datosMonotributo.impuesto);
+                    HelperContribuyenteCOM.CargarImpuestos(impuestosList, contribuyenteCOM);
+
+                    //Actividades
+                    ActividadCOM Act = new ActividadCOM
+                    {
+                        Codigo = Datos.datosMonotributo.actividadMonotributista.idActividad.ToString(),
+                        Descripcion = Datos.datosMonotributo.actividadMonotributista.descripcionActividad
+                    };
+
+                    ActividadCOM[] Acts = new ActividadCOM[1];
+                    Acts[0] = Act;
+                    contribuyenteCOM.SetActividades(Acts);
+
+                    contribuyenteCOM.CondicionIva = ((int)GlobalSettings.CondicionIVA.ResponsableMonotributo).ToString();
+                    contribuyenteCOM.CondicionIvaDesc = GlobalSettings.CondicionIVA.ResponsableMonotributo.ToString();
 
                 }
-
                 else
                 {
 
-                    if (datosGenerales.domicilioFiscal != null)
+
+                    if (Datos.datosRegimenGeneral.categoriaAutonomo != null)
                     {
-
-                        DomicilioCOM Dom = new DomicilioCOM
-                        {
-                            CodPostal = datosGenerales.domicilioFiscal.codPostal,
-                            DatoAdicional = datosGenerales.domicilioFiscal.datoAdicional,
-                            DescripcionProvincia = datosGenerales.domicilioFiscal.descripcionProvincia,
-                            Direccion = datosGenerales.domicilioFiscal.direccion,
-                            IdProvincia = datosGenerales.domicilioFiscal.idProvincia,
-                            Localidad = datosGenerales.domicilioFiscal.localidad,
-                            TipoDatoAdicional = datosGenerales.domicilioFiscal.tipoDatoAdicional,
-                            TipoDomicilio = datosGenerales.domicilioFiscal.tipoDomicilio
-                        };
-                        contribuyenteCOM.DomicilioFiscal.Add(Dom);
-
+                        //HelperContribuyenteCOM.CargarCategoriasMonotributo(Datos.datosRegimenGeneral.categoriaAutonomo, contribuyenteCOM);
+                        contribuyenteCOM.IdCatAutonomo = Datos.datosRegimenGeneral.categoriaAutonomo.ToString();
                     }
+                    //IMpuestos 
+                    var impuestosList_ = new List<Aws.impuesto>(Datos.datosRegimenGeneral.impuesto);
+                    var Impuestos_ = HelperContribuyenteCOM.CargarImpuestos(impuestosList_, contribuyenteCOM);
+
+
+                    var actividadesList_ = new List<Aws.actividad>(Datos.datosRegimenGeneral.actividad);
+                    HelperContribuyenteCOM.CargarActividades(actividadesList_, contribuyenteCOM);
+
+                    // Interpretar la condición IVA
+                    contribuyenteCOM.CondicionIva = InterpretarCondicionIVA(Impuestos_).ToString();
+                    contribuyenteCOM.CondicionIvaDesc = ((GlobalSettings.CondicionIVA)Int32.Parse(contribuyenteCOM.CondicionIva)).ToString();
+
+
                 }
 
                 #endregion
-                #region [Datos Actividades - Impuestos - Categorias Monot]
-                //armar el vecotr de actividades
-                if (Datos.datosRegimenGeneral != null)
-                {
-                    foreach (var act in Datos.datosRegimenGeneral.actividad)
-                    {
-                        ActividadCOM actividad = new ActividadCOM
-                        {
-                            Codigo = act.idActividad.ToString(),
-                            Descripcion = act.descripcionActividad,
 
-                        };
-                        contribuyenteCOM.Actividades.Add(actividad);
-                    }
-                    contribuyenteCOM.ActividadesCount = contribuyenteCOM.Actividades.Count;
 
-                    foreach (var imp in Datos.datosRegimenGeneral.impuesto)
-                    {
-                        ImpuestoCOM impuesto = new ImpuestoCOM
-                        {
-                            Codigo = imp.idImpuesto.ToString(),
-                            Descripcion = imp.descripcionImpuesto,
-                        };
-                        contribuyenteCOM.ImpuestosCOM.Add(impuesto);
-                        
 
-                    }
-                    contribuyenteCOM.ImpuestosCount = contribuyenteCOM.ImpuestosCOM.Count;
-                    contribuyenteCOM.CondicionIva = InterpretarCondicionIVA(contribuyenteCOM.ImpuestosCOM).ToString();
-                }
 
-                //armar el vector de categoriasMonotributo
-                if (Datos.datosMonotributo.categoriaMonotributo != null)
-                {
-                    var cat = Datos.datosMonotributo.categoriaMonotributo;
-                    CategoriaMonotributoCOM categoria = new CategoriaMonotributoCOM
-                    {
-                        Categoria = cat.idCategoria.ToString(),
-                        Descripcion = cat.descripcionCategoria,
 
-                    };
-                    contribuyenteCOM.CategoriasMonotributo.Add(categoria);
-
-                    contribuyenteCOM.CategoriasMonotributoCount = contribuyenteCOM.CategoriasMonotributo.Count;
-
-                    contribuyenteCOM.CondicionIva = ((int)GlobalSettings.CondicionIVA.ResponsableMonotributo).ToString();
-                }
-                #endregion
-                 
                 return contribuyenteCOM;
             }
             catch (Exception ex)

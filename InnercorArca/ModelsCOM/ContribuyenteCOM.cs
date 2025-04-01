@@ -1,17 +1,103 @@
-﻿using System;
-using System.Collections.Generic;
-
-
-
-// ModelsCOM/ContribuyenteCOM.cs
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace InnercorArca.V1.ModelsCOM
 {
     [ComVisible(true)]
-    [Guid("8B5A9D3C-55F7-4B66-9A75-8C3C8F12F672")]
+    [Guid("F5E8A637-9265-4B70-98F5-01537DA94B2C")]
+    [ProgId("InnercorArca.ActividadCOM")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class ContribuyenteCOM
+    public class ActividadCOM
+    {
+        public string Codigo { get; set; }
+        public string Descripcion { get; set; }
+    }
+
+    [ComVisible(true)]
+    [Guid("2C8CE676-A4B1-4F23-96AE-44D2D6C76A7A")]
+    [ProgId("InnercorArca.CategoriaMonotributoCOM")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
+    public class CategoriaMonotributoCOM
+    {
+        public string Categoria { get; set; }
+        public string Descripcion { get; set; }
+    }
+
+    [ComVisible(true)]
+    [Guid("3F7D447B-3E69-4413-BE19-8EE4F169F172")]
+    [ProgId("InnercorArca.ImpuestoCOM")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
+    public class ImpuestoCOM
+    {
+        public string Codigo { get; set; }
+        public string Nombre { get; set; }
+    }
+
+    [ComVisible(true)]
+    [Guid("E60DAA1B-3D44-4A7A-B799-118A3C8D35DA")]
+    [ProgId("InnercorArca.DomicilioCOM")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
+    public class DomicilioCOM
+    {
+        public string CodPostal { get; set; }
+        public string DatoAdicional { get; set; }
+        public string DescripcionProvincia { get; set; }
+        public string Direccion { get; set; }
+        public string IdProvincia { get; set; }
+        public string Localidad { get; set; }
+        public string TipoDatoAdicional { get; set; }
+        public string TipoDomicilio { get; set; }
+    }
+
+    [ComVisible(true)]
+    [Guid("0F86B6E5-113A-45B7-90C1-6BDB19B9DA86")]
+    [InterfaceType(ComInterfaceType.InterfaceIsDual)]
+    public interface IContribuyenteCOM
+    {
+        string Apellido { get; set; }
+        string NombreSimple { get; set; }
+        string RazonSocial { get; set; }
+        string Nombre { get; set; }
+        string EstadoClave { get; set; }
+        string TipoClave { get; set; }
+        string TipoPersona { get; set; }
+        long IdPersona { get; set; }
+        string Dependencia { get; set; }
+        string CondicionIva { get; set; }
+        int MesCierre { get; set; }
+        string NumeroDocumento { get; set; }
+        string TipoDocumento { get; set; }
+        string EsSucesion { get; set; }
+        string FechaFallecimiento { get; set; }
+        string FechaInscripcion { get; set; }
+        string IdCatAutonomo { get; set; }
+        string IdDependencia { get; set; }
+        bool SolicitarConstanciaInscripcion { get; set; }
+
+        DomicilioCOM DomicilioFiscal { get; set; }
+        //void SetDomicilioFiscal(DomicilioCOM[] domicilio);
+        //DomicilioCOM GetDomicilioFiscal(int nIndice);
+        //int GetDomicilioFiscalCount();
+        [DispId(0)]
+        ActividadCOM GetActividad(int nIndice);
+        int GetActividadesCount();
+        void SetActividades(ActividadCOM[] actividades);
+
+        [DispId(1)]
+        CategoriaMonotributoCOM GetCategoriaMonotributo(int nIndice);
+        int GetCategoriasMonotributoCount();
+        void SetCategoriasMonotributo(CategoriaMonotributoCOM[] categorias);
+
+        [DispId(2)]
+        ImpuestoCOM GetImpuestoCOM(int nIndice);
+        int GetImpuestosCOMCount();
+        void SetImpuestosCOM(ImpuestoCOM[] impuestos);
+    }
+
+    [ComVisible(true)]
+    [Guid("1A9F1A3E-F450-46B2-BF6D-09B934CFAB10")]
+    [ProgId("InnercorArca.ContribuyenteCOM")]
+    [ClassInterface(ClassInterfaceType.None)]
+    public class ContribuyenteCOM : IContribuyenteCOM
     {
         public string Apellido { get; set; }
         public string NombreSimple { get; set; }
@@ -20,25 +106,54 @@ namespace InnercorArca.V1.ModelsCOM
         public string EstadoClave { get; set; }
         public string TipoClave { get; set; }
         public string TipoPersona { get; set; }
-        public long IdPersona { get; set; } 
+        public long IdPersona { get; set; }
         public string Dependencia { get; set; }
         public string CondicionIva { get; set; }
-        
-        public int MesCierre { get; set; }  
-
+        public string CondicionIvaDesc { get; set; }
+        public int MesCierre { get; set; }
         public string NumeroDocumento { get; set; }
         public string TipoDocumento { get; set; }
-        public List<DomicilioCOM> DomicilioFiscal { get; set; }
+        public string EsSucesion { get; set; }
+        public string FechaFallecimiento { get; set; }
+        public string FechaInscripcion { get; set; }
+        public string IdCatAutonomo { get; set; }
+        public string IdDependencia { get; set; }
+        public bool SolicitarConstanciaInscripcion { get; set; }
 
-        public List<ActividadCOM> Actividades { get; set; }
+        public DomicilioCOM DomicilioFiscal { get; set; }
+        private ActividadCOM[] _actividades;
+        private CategoriaMonotributoCOM[] _categoriasMonotributo;
+        private ImpuestoCOM[] _impuestosCOM;
 
-        public int ActividadesCount { get; set; }
+        [DispId(0)]
+        public ActividadCOM GetActividad(int nIndice)
+        {
+            if (_actividades == null || nIndice < 0 || nIndice >= _actividades.Length)
+                return null;
+            return _actividades[nIndice];
+        }
+        public int GetActividadesCount() => _actividades?.Length ?? 0;
+        public void SetActividades(ActividadCOM[] actividades) => _actividades = actividades;
 
-        public List<CategoriaMonotributoCOM> CategoriasMonotributo { get; set; }
-        public int CategoriasMonotributoCount { get; set; }
+        [DispId(1)]
+        public CategoriaMonotributoCOM GetCategoriaMonotributo(int nIndice)
+        {
+            if (_categoriasMonotributo == null || nIndice < 0 || nIndice >= _categoriasMonotributo.Length)
+                return null;
+            return _categoriasMonotributo[nIndice];
+        }
+        public int GetCategoriasMonotributoCount() => _categoriasMonotributo?.Length ?? 0;
+        public void SetCategoriasMonotributo(CategoriaMonotributoCOM[] categorias) => _categoriasMonotributo = categorias;
 
-        public List<ImpuestoCOM> ImpuestosCOM { get; set; }
-        public int ImpuestosCount { get; set; }
- 
+        [DispId(2)]
+        public ImpuestoCOM GetImpuestoCOM(int nIndice)
+        {
+            if (_impuestosCOM == null || nIndice < 0 || nIndice >= _impuestosCOM.Length)
+                return null;
+            return _impuestosCOM[nIndice];
+        }
+        public int GetImpuestosCOMCount() => _impuestosCOM?.Length ?? 0;
+        public void SetImpuestosCOM(ImpuestoCOM[] impuestos) => _impuestosCOM = impuestos;
+
     }
 }

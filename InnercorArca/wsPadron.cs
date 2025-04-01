@@ -1,5 +1,6 @@
 ﻿using InnercorArca.V1.Helpers;
 using InnercorArca.V1.ModelsCOM;
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Net;
@@ -150,12 +151,6 @@ namespace InnercorArca.V1
 
                 // Guardar el CMS en un archivo .cache
                 TkValido = HelpersArca.GenerarCache(PathCache, response, service);
-                //if (TkValido != null)
-                //{
-                //    HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-
-                //    return true;
-                //}
                 return true;
             }
             catch (Exception ex)
@@ -191,13 +186,12 @@ namespace InnercorArca.V1
                 }
 
                 if (!success)
-                {
-
+                { 
                     return false;
                 }
 
 
-                oContrib = HelpersPadron.MapToContribuyenteCOMAsync(response, service);
+                oContrib = HelpersPadron.MapToContribuyenteCOM(response, service);
                 Contribuyente = (ContribuyenteCOM)oContrib;
 
                 return true;
@@ -236,16 +230,24 @@ namespace InnercorArca.V1
                     {
                         string errorDesc = "";
                         if (response.errorConstancia != null)
-                            errorDesc = response.errorConstancia.error[0];
+                        {
+                            if  (response.errorConstancia.error[0].Contains("La clave  no registra Apellido y/o Nombre informados"))
+                            {
+                                response = response.errorConstancia;
+                                return true;
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                            
                         if (response.errorMonotributo != null) errorDesc += response.errorMonotributo;
                         if (response.errorRegimenGeneral != null) errorDesc += response.errorRegimenGeneral;
 
                         SetError(GlobalSettings.Errors.GET_ERROR, errorDesc, "Errores Respuesta Consultar");
                         return false;
                     }
-
-
-
                 }
                 else
                 {

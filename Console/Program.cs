@@ -51,9 +51,9 @@ namespace Console_InnercorDLL
 
             object oCont = null;
 
-            Client.Consultar("25657140", ref oCont);
+            //Client.Consultar("25657140", ref oCont);
             //Client.Consultar("33710525809", ref oCont);
-            //            Client.Consultar("44433967", ref oCont);
+                        Client.Consultar("44433967", ref oCont);
             if (Client.ErrorCode != 0)
                 Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
             else
@@ -61,6 +61,10 @@ namespace Console_InnercorDLL
                 object oCont2 = Client.GetContribuyente();
                 if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
                 PrintProperties(oCont2);
+
+                object oContD = Client.GetDomicilio();
+                PrintProperties(oContD);
+                 
             }
         }
 

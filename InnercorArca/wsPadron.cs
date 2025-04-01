@@ -1,4 +1,5 @@
 ﻿using InnercorArca.V1.Helpers;
+using InnercorArca.V1.ModelsCOM;
 using System;
 using System.IO;
 using System.Net;
@@ -18,6 +19,29 @@ namespace InnercorArca.V1
     {
         [DispId(1)]
         bool Login(string pathCRT, string pathKey);
+
+        [DispId(2)]
+        bool Consultar(string nCuit, ref object oContrib);
+        [DispId(3)]
+        object GetContribuyente();
+        [DispId(4)]
+        object GetDomicilio();
+        [DispId(5)]
+        string GetVersion();
+        [DispId(6)]
+        int ErrorCode { get; }
+        [DispId(7)]
+        string ErrorDesc { get; }
+        [DispId(8)]
+        string XmlResponse { get; }
+        [DispId(9)]
+        string Excepcion { get; }
+        [DispId(10)]
+        string TraceBack { get; }
+        [DispId(11)]
+        bool ModoProduccion { get; set; }
+        [DispId(12)]
+        string Cuit { get; set; }
     }
 
     [Guid("66666666-7777-8888-9999-666666000000")]
@@ -27,9 +51,10 @@ namespace InnercorArca.V1
     {
         #region [VAriables Publicas]
         readonly string dllPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        readonly  string service = GlobalSettings.ServiceARCA.ws_sr_constancia_inscripcion.ToString();
+        readonly string service = GlobalSettings.ServiceARCA.ws_sr_constancia_inscripcion.ToString();
+
         public int ErrorCode { get; private set; }
-        public string ErrorDesc { get; private set; } = string.Empty; 
+        public string ErrorDesc { get; private set; } = string.Empty;
         public bool ModoProduccion { get; set; } = false;
 
         public string Cuit { get; set; } = string.Empty;
@@ -37,12 +62,10 @@ namespace InnercorArca.V1
         public string Excepcion { get; private set; } = string.Empty;
         public string TraceBack { get; private set; } = string.Empty;
 
-        public dynamic Contribuyente { get; private set; }
-
         #endregion
 
         #region[Declaración Variables Internas]
-        internal bool Produccion { get; private set; } = false;
+        internal bool Produccion { get; set; } = false;
         internal string PathCache { get; private set; } = string.Empty;
 
         // Instancia FEAuthRequest correctamente
@@ -50,6 +73,8 @@ namespace InnercorArca.V1
 
         // Variable estática para que persista mientras la DLL esté en uso
         private static CacheResult TkValido;
+        internal ContribuyenteCOM Contribuyente { get; private set; }
+
         #endregion
 
         public wsPadron()
@@ -63,18 +88,18 @@ namespace InnercorArca.V1
 
         }
 
-
+        #region [Metodos ARCA]
         public bool Login(string pathCRT, string pathKey)
         {
             try
             {
-            
-               
+
+
                 string urlWSAA = string.Empty;
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = ModoProduccion;
                 urlWSAA = Produccion ? GlobalSettings.urlWSAAProd : GlobalSettings.urlWSAAHomo;
-             
+
 
                 // Asegura que el protocolo TLS 1.2 se use siempre
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -91,9 +116,9 @@ namespace InnercorArca.V1
                         // Verificar si el token es válido
                         if (HelpersArca.ValidarToken(cache))
                         {
-                            TkValido = HelpersArca.RecuperarTokenSign(cache );
+                            TkValido = HelpersArca.RecuperarTokenSign(cache);
 
-                            HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+                            //HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
                             return true;
                         }
                     }
@@ -125,13 +150,13 @@ namespace InnercorArca.V1
 
                 // Guardar el CMS en un archivo .cache
                 TkValido = HelpersArca.GenerarCache(PathCache, response, service);
-                if (TkValido != null)
-                {
-                    HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+                //if (TkValido != null)
+                //{
+                //    HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
 
-                    return true;
-                }
-                return false;
+                //    return true;
+                //}
+                return true;
             }
             catch (Exception ex)
             {
@@ -140,58 +165,143 @@ namespace InnercorArca.V1
             }
         }
 
-        //OContrib
-        // feafip.contribuyente
-        //     
         public bool Consultar(string nCuit, ref object oContrib)
         {
             try
             {
-                ////obtiene token y sign del archivo cache
+                // obtiene token y sign del archivo cache
                 if (TkValido == null)
                     TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache, service));
-                dynamic response;
 
-                if (Produccion)
+                dynamic response = null;
+                bool success = false;
+
+                if (nCuit.Length != 11)
                 {
-                    var client = new Aws.PersonaServiceA5();
-                    response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64( nCuit));
+                    string cuitM = HelpersCUIT.GenerarCUIT(Convert.ToInt64(nCuit), true, "M");
+                    string cuitF = HelpersCUIT.GenerarCUIT(Convert.ToInt64(nCuit), true, "F");
+
+                    success = TryGetPersona(cuitM, ref response, service) || TryGetPersona(cuitF, ref response, service);
                 }
                 else
                 {
-                    var client = new Awshomo.PersonaServiceA5();
-                    response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(nCuit));
+                    success = TryGetPersona(nCuit, ref response, service);
+
 
                 }
 
-                // Verificar errores en la respuesta
-                //if (response.Errors != null && response.Errors.Length > 0)
-                //{
-                //    int errCode = 0; string errDesc = ""; string xmlResponse = "";
-                //    HelpersArca.ProcesarRespuesta(response, ref errCode, ref errDesc, ref xmlResponse);
-                //    SetError((Errors)errCode, errDesc, "Errores Respuesta FECompConsultar");
-                //    XmlResponse = xmlResponse;
-                //    return false;
-                //}
+                if (!success)
+                {
 
-                // Log the raw XML response
-                //Console.WriteLine(response.datosGenerales.ToString());
+                    return false;
+                }
 
-                // Deserializar response.persona a un objeto dinámico
-                oContrib = response.datosGenerales;
-                Contribuyente = oContrib;
+
+                oContrib = HelpersPadron.MapToContribuyenteCOMAsync(response, service);
+                Contribuyente = (ContribuyenteCOM)oContrib;
 
                 return true;
             }
-            catch ( Exception ex)
+            catch (Exception ex)
             {
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
         }
 
+        #endregion
+
+        #region [Métodos Internos ] 
+        private bool TryGetPersona(string cuit, ref dynamic response, string service)
+        {
+            try
+            {
 
 
+                if (service == GlobalSettings.ServiceARCA.ws_sr_padron_a5.ToString() || service == GlobalSettings.ServiceARCA.ws_sr_constancia_inscripcion.ToString())
+                {
+                    if (Produccion)
+                    {
+                        var client = new Aws.PersonaServiceA5();
+                        response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
+                    }
+                    else
+                    {
+                        var client = new Awshomo.PersonaServiceA5();
+                        response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
+                    }
+
+
+                    if (response.errorConstancia != null || response.errorMonotributo != null || response.errorRegimenGeneral != null)
+                    {
+                        string errorDesc = "";
+                        if (response.errorConstancia != null)
+                            errorDesc = response.errorConstancia.error[0];
+                        if (response.errorMonotributo != null) errorDesc += response.errorMonotributo;
+                        if (response.errorRegimenGeneral != null) errorDesc += response.errorRegimenGeneral;
+
+                        SetError(GlobalSettings.Errors.GET_ERROR, errorDesc, "Errores Respuesta Consultar");
+                        return false;
+                    }
+
+
+
+                }
+                else
+                {
+                    return false;
+                }
+
+
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region [Metodos COM]
+
+
+        public object GetContribuyente()
+        {
+            try
+            {
+                return Contribuyente;
+            }
+            catch (Exception ex)
+            {
+                SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+                return null;
+            }
+
+        }
+        public object GetDomicilio()
+        {
+            try
+            {
+                return Contribuyente.DomicilioFiscal;
+            }
+            catch (Exception ex)
+            {
+                SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+                return null;
+            }
+
+        }
+
+        #endregion
+
+
+        public string GetVersion()
+        {
+            return "1.1.3";
+        }
+        #region[Metodos Seteo]
         private void SetError(GlobalSettings.Errors codigoError, string descError, string traceBack)
         {
             ErrorCode = (int)codigoError;
@@ -200,5 +310,8 @@ namespace InnercorArca.V1
 
             TraceBack = traceBack;
         }
+        #endregion
+
+
     }
 }

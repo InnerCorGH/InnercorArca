@@ -1,6 +1,9 @@
-﻿using System;
+﻿using InnercorArca.V1.ModelsCOM;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Web.Services.Description;
 using System.Xml;
 using System.Xml.Serialization;
 using static InnercorArca.V1.Helpers.InnercorArcaModels;
@@ -102,7 +105,7 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception ex)
             {
-                throw new Exception($"Path: {pathCache} - {ex.Message}") ;
+                throw new Exception($"Path: {pathCache} - {ex.Message}");
             }
         }
 
@@ -130,13 +133,14 @@ namespace InnercorArca.V1.Helpers
                 TimeSpan difference = savedTimeUtc - nowUtc;
 
                 return (difference.TotalMinutes > 0); // Si es positivo, el token sigue válido
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw ex;
             }
         }
 
-        public static CacheResult RecuperarTokenSign(string cache )
+        public static CacheResult RecuperarTokenSign(string cache)
         {
             try
             {
@@ -154,7 +158,8 @@ namespace InnercorArca.V1.Helpers
                     Sign = lines[2].Substring(5),
                     ExpTime = DateTime.Parse(lines[3].Substring(8))
                 };
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -184,15 +189,15 @@ namespace InnercorArca.V1.Helpers
             {
                 throw ex;
             }
-       
+
         }
         // Método auxiliar para manejar la respuesta de AFIP de una Solicitud de Factura
         public static void ProcesarRespuestaFactura(dynamic objResp, ref int errorCode, ref string errorDesc,
-            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ )
+            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ)
         {
             try
             {
-                 
+
                 if (objResp.FeDetResp != null) //Solicitud procesada correctament
                 {
 
@@ -217,7 +222,7 @@ namespace InnercorArca.V1.Helpers
                             var det = objResp.FeDetResp[i];
                             if (det != null)
                             {
-                                cae = det.CAE; 
+                                cae = det.CAE;
                                 vtoCae = det.CAEFchVto;
                             }
                         }
@@ -233,12 +238,12 @@ namespace InnercorArca.V1.Helpers
                         var obs = objResp.Errors[i];
                         if (obs != null)
                         {
-                            errorCode =   obs.Code;
-                            errorDesc += $" {obs.Code} {obs.Msg} " ;
+                            errorCode = obs.Code;
+                            errorDesc += $" {obs.Code} {obs.Msg} ";
                         }
                     }
                 }
-              
+
                 //Procesar Events dentro de FeDetResp
                 if (objResp.Events != null)
                 {
@@ -247,19 +252,19 @@ namespace InnercorArca.V1.Helpers
                         var ev = objResp.FeDetResp.Events[i];
                         if (ev != null)
                         {
-                            errorCode =   ev.Code;
-                            errorDesc += $" {ev.Code} {ev.Msg}" ;
+                            errorCode = ev.Code;
+                            errorDesc += $" {ev.Code} {ev.Msg}";
                         }
                     }
                 }
 
 
-                xmlResponse = HelpersGlobal. SerializeObjectAXml(objResp);
+                xmlResponse = HelpersGlobal.SerializeObjectAXml(objResp);
             }
             catch (Exception ex)
             {
                 errorCode = (int)GlobalSettings.Errors.EXCEPTION;
-                errorDesc =$"Exception {ex.Message}";
+                errorDesc = $"Exception {ex.Message}";
             }
         }
         private static Wsfev1.FEAuthRequest FEAuthRequest_Set(string Token, string Sign, long CUIT)
@@ -335,7 +340,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
         // Método genérico para serializar cualquier objeto a XML
-    
+
         public static object ConvertAlicIva(InnercorArca.V1.Helpers.InnercorArcaModels.AlicIva alicIva, bool produccion)
         {
             if (produccion)
@@ -430,6 +435,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-
+  
+     
     }
 }

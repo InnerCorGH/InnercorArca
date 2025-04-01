@@ -1,6 +1,4 @@
-﻿using InnercorArca.V1.Wsfev1;
-using System;
-using System.Runtime.Remoting;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Console_InnercorDLL
@@ -13,7 +11,7 @@ namespace Console_InnercorDLL
 
             try
             {
-               //TestARCA_wsfev1();
+                //TestARCA_wsfev1();
 
                 TestARCA_wsPadron();
             }
@@ -30,14 +28,14 @@ namespace Console_InnercorDLL
 
             Console.WriteLine("*********ARCA WSPadron***********");
             string pathCrt = @"K:\Trabajo.Innercor\DLL vs\InnercorSRL_20240205.crt";
-            string pathKey = @"K:\Trabajo.Innercor\DLL vs\InnercorSRL_20240205.key"; 
+            string pathKey = @"K:\Trabajo.Innercor\DLL vs\InnercorSRL_20240205.key";
 
             var Client = new InnercorArca.V1.wsPadron()
-            { 
+            {
                 Cuit = "33710525809",
                 ModoProduccion = true
             };
-            
+
             bool isAuthenticated = Client.Login(pathCrt, pathKey);
 
             if (isAuthenticated)
@@ -48,16 +46,38 @@ namespace Console_InnercorDLL
             {
                 Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
                 return;
-            };
+            }
+            ;
 
-            object oCont=null;
+            object oCont = null;
 
-            Client.Consultar("27256571450", ref oCont);
-            if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-            
-
+            Client.Consultar("25657140", ref oCont);
+            //Client.Consultar("33710525809", ref oCont);
+            //            Client.Consultar("44433967", ref oCont);
+            if (Client.ErrorCode != 0)
+                Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            else
+            {
+                object oCont2 = Client.GetContribuyente();
+                if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+                PrintProperties(oCont2);
+            }
         }
 
+        static void PrintProperties(object obj)
+        {
+            if (obj == null)
+            {
+                Console.WriteLine("Object is null");
+                return;
+            }
+
+            var properties = obj.GetType().GetProperties();
+            foreach (var property in properties)
+            {
+                Console.WriteLine($"{property.Name}: {property.GetValue(obj)}");
+            }
+        }
         static void TestARCA_wsfev1()
         {
 
@@ -124,7 +144,7 @@ namespace Console_InnercorDLL
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             ////invocar agregafactura  
-            Client.AgregaFactura(1, 80, 27242686085, 1,  1, "20250328", 1167864.53, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
+            Client.AgregaFactura(1, 80, 27242686085, 1, 1, "20250328", 1167864.53, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
             if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             Client.AgregaIVA(5, 938043.80, 196989.20);
@@ -135,7 +155,7 @@ namespace Console_InnercorDLL
             ////Client.AgregaOpcional("27", "SCA");
             ////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            Client.AgregaTributo( 7,"Percepción Tucumán", 938043.80,3.50,32831.53);
+            Client.AgregaTributo(7, "Percepción Tucumán", 938043.80, 3.50, 32831.53);
             if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             //Client.AgregaCompAsoc (4, 99, 35, 20256571405, "20250327");

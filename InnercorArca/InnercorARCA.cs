@@ -101,7 +101,7 @@ namespace InnercorArca.V1
     {
         #region [Declaración Variables Públicas]
         readonly string dllPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        string service = GlobalSettings.ServiceARCA.wsfe.ToString();
+        readonly string service = GlobalSettings.ServiceARCA.wsfe.ToString();
         public int ErrorCode { get; private set; }
         public string ErrorDesc { get; private set; } = string.Empty;
         public string Cuit { get; set; } = string.Empty;

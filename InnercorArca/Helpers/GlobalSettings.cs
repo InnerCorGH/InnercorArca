@@ -21,6 +21,7 @@ namespace InnercorArca.V1.Helpers
             WSAA_ERROR = unchecked((int)400),
             EXCEPTION = unchecked((int)500),
             FORMAT_ERROR = unchecked((int)600),
+            GET_ERROR = unchecked((int)700),
         }
 
         public enum ServiceARCA : int
@@ -31,7 +32,8 @@ namespace InnercorArca.V1.Helpers
             ws_sr_padron_a13,
             ws_sr_padron_a10,
             ws_sr_padron_a100,
-            ws_sr_constancia_inscripcion
+            ws_sr_constancia_inscripcion,
+            ws_sr_padron_rut
         }
 
         public enum MetCAEA : int
@@ -40,6 +42,15 @@ namespace InnercorArca.V1.Helpers
             CAEASOLICITAR = 2,
             CAEAINFORMAR = 3,
         }
+        public enum CondicionIVA : int
+        {
+            ResponsableInscripto = 1,
+            NoResponsable = 2,
+            IvaSujetoExento = 4,
+            CondumidorFinal = 5,
+            ResponsableMonotributo = 6,
+            SinDatos
 
+        }
     }
 }

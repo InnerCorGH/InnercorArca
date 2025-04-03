@@ -55,6 +55,7 @@
     <Compile Include="Helpers\HelpersArcaCAEA.cs" />
     <Compile Include="Helpers\HelpersContribuyenteCOM.cs" />
     <Compile Include="Helpers\HelpersCUIT.cs" />
+    <Compile Include="Helpers\HelpersLogger.cs" />
     <Compile Include="Helpers\HelpersPadron.cs" />
     <Compile Include="Helpers\ObjectExtensions.cs" />
     <Compile Include="InnercorARCA.cs" />

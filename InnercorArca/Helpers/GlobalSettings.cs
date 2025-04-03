@@ -52,5 +52,11 @@ namespace InnercorArca.V1.Helpers
             SinDatos
 
         }
+
+        public enum TipoInformeARCA : int
+        {
+            CAE = 1,
+            CAEA= 2
+        }
     }
 }

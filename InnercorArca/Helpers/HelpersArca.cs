@@ -50,33 +50,7 @@ namespace InnercorArca.V1.Helpers
                 throw ex;
             }
         }
-
-
-        public static void SeteaAuthRequest(bool Produccion, ref object feAuthRequest, CacheResult tkValido, long cuit)
-        {
-            try
-            {
-                if (Produccion)
-                {
-                    if (feAuthRequest == null)
-                    {
-                        feAuthRequest = HelpersArca.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
-                    }
-                }
-                else
-                {
-                    if (feAuthRequest == null)
-                    {
-                        feAuthRequest = HelpersArca.FEAuthRequest_Set_HOMO(tkValido.Token, tkValido.Sign, cuit);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
+         
 
         public static string LeerCache(string pathCache, string service)
         {
@@ -165,9 +139,35 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-        // Método auxiliar para manejar la respuesta de AFIP
-        public static void ProcesarRespuesta(dynamic objResp, ref int errorCode, ref string errorDesc, ref string xmlResponse)
+        public static void SeteaAuthRequest(bool Produccion, ref object feAuthRequest, CacheResult tkValido, long cuit)
         {
+            try
+            {
+                if (Produccion)
+                {
+                    if (feAuthRequest == null)
+                    {
+                        feAuthRequest = HelpersArca.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
+                    }
+                }
+                else
+                {
+                    if (feAuthRequest == null)
+                    {
+                        feAuthRequest = HelpersArca.FEAuthRequest_Set_HOMO(tkValido.Token, tkValido.Sign, cuit);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // Método auxiliar para manejar la respuesta de AFIP
+        public static void ProcesarRespuesta(bool habilitaLog, dynamic objResp, ref int errorCode, ref string errorDesc, ref string xmlResponse)
+        {
+            if (habilitaLog) HelpersLogger.Escribir("ProcesarRespuesta ");
             try
             {
                 if (objResp.Errors != null)
@@ -182,6 +182,8 @@ namespace InnercorArca.V1.Helpers
                         }
                     }
                     xmlResponse = HelpersGlobal.SerializeToXml(objResp);
+
+                    if (habilitaLog) HelpersLogger.Escribir($"Errors {xmlResponse}");
                     return;
                 }
             }
@@ -192,11 +194,14 @@ namespace InnercorArca.V1.Helpers
 
         }
         // Método auxiliar para manejar la respuesta de AFIP de una Solicitud de Factura
-        public static void ProcesarRespuestaFactura(dynamic objResp, ref int errorCode, ref string errorDesc,
-            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ)
+        public static void ProcesarRespuestaFactura(bool habilitaLog, dynamic objResp, ref int errorCode, ref string errorDesc,
+            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ, ref string eventDesc, GlobalSettings.TipoInformeARCA tipoInformeARCA )
         {
             try
             {
+               
+                if (habilitaLog) HelpersLogger. Escribir("ProcesarRespuestaFactura");
+               
 
                 if (objResp.FeDetResp != null) //Solicitud procesada correctament
                 {
@@ -211,22 +216,33 @@ namespace InnercorArca.V1.Helpers
                             //errorDesc = objResp.FeDetResp[0].Observaciones[0].Msg;
 
                             observ = objResp.FeDetResp[0].Observaciones[0].Msg;
-
+                            if (habilitaLog) HelpersLogger.Escribir($"Observ {observ}");
                         }
                         reProc = objResp.FeDetResp[0].Resultado;
                     }
                     else//Solicitud procesada correctamente
                     {
+
                         for (int i = 0; i < objResp.FeDetResp.Length; i++)
                         {
                             var det = objResp.FeDetResp[i];
                             if (det != null)
                             {
-                                cae = det.CAE;
-                                vtoCae = det.CAEFchVto;
+                                if (tipoInformeARCA == GlobalSettings.TipoInformeARCA.CAE)
+                                {
+                                    cae = det.CAE;
+                                    vtoCae = det.CAEFchVto;
+                                }
+                                else
+                                {
+                                    cae = det.CAEA;
+                                    vtoCae = det.CbteFch;
+                                }
                             }
+
                         }
 
+                        if (habilitaLog) HelpersLogger.Escribir($"CAE {cae} VtoCAE {vtoCae}");
                     }
                 }
 
@@ -242,6 +258,8 @@ namespace InnercorArca.V1.Helpers
                             errorDesc += $" {obs.Code} {obs.Msg} ";
                         }
                     }
+
+                    if (habilitaLog) HelpersLogger.Escribir($"Errors {errorDesc}");
                 }
 
                 //Procesar Events dentro de FeDetResp
@@ -249,22 +267,28 @@ namespace InnercorArca.V1.Helpers
                 {
                     for (int i = 0; i < objResp.Events.Length; i++)
                     {
-                        var ev = objResp.FeDetResp.Events[i];
+                        var ev = objResp.Events[i];
                         if (ev != null)
                         {
-                            errorCode = ev.Code;
-                            errorDesc += $" {ev.Code} {ev.Msg}";
+                            //errorCode = ev.Code;
+                            eventDesc += $" {ev.Code} {ev.Msg}";
                         }
                     }
+
+                    if (habilitaLog) HelpersLogger.Escribir($"Events {eventDesc}");
                 }
 
 
                 xmlResponse = HelpersGlobal.SerializeObjectAXml(objResp);
+
+                if (habilitaLog) HelpersLogger.Escribir($"xmlResponse {xmlResponse}");
             }
             catch (Exception ex)
             {
                 errorCode = (int)GlobalSettings.Errors.EXCEPTION;
                 errorDesc = $"Exception {ex.Message}";
+
+                if (habilitaLog) HelpersLogger.Escribir($"Exception {errorDesc}");
             }
         }
         private static Wsfev1.FEAuthRequest FEAuthRequest_Set(string Token, string Sign, long CUIT)
@@ -347,8 +371,8 @@ namespace InnercorArca.V1.Helpers
             {
                 return new Wsfev1.AlicIva
                 {
-                    BaseImp = alicIva.BaseImp,
-                    Importe = alicIva.Importe,
+                    BaseImp = alicIva.BaseImp ,
+                    Importe = alicIva.Importe ,
                     Id = alicIva.Id
                 };
             }

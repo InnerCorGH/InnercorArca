@@ -8,7 +8,7 @@ namespace InnercorArca.V1.Helpers
 
         public static bool MetodoCAEA(GlobalSettings.MetCAEA accion, CacheResult tkValido, string pathCache, bool produccion, string Cuit,
             int nPeriod, short nQuince, ref string cNroCAE, ref string dFchDes, ref string dFchHas, ref string dFchTop, ref string dFchPro,
-             out int errCode, out string errDesc, out string xmlResponse, out string trackBack)
+             out int errCode, out string errDesc, out string xmlResponse, out string trackBack, bool habilitaLog)
         {
             try
             {
@@ -61,7 +61,7 @@ namespace InnercorArca.V1.Helpers
                 if (response.Errors != null && response.Errors.Length > 0)
                 {
                     errCode = 0; errDesc = ""; xmlResponse = "";
-                    HelpersArca.ProcesarRespuesta(response, ref errCode, ref errDesc, ref xmlResponse);
+                    HelpersArca.ProcesarRespuesta(habilitaLog, response, ref errCode, ref errDesc, ref xmlResponse);
                     trackBack = $"Error Método CAEA {accion}";
 
                     return false;

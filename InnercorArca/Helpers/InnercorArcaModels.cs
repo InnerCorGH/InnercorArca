@@ -45,6 +45,8 @@ namespace InnercorArca.V1.Helpers
             public Tributo[] Tributos { get; set; }
             public CbteAsoc[] ComprobantesAsociados { get; set; }
 
+
+
         }
 
         public class AlicIva
@@ -86,7 +88,7 @@ namespace InnercorArca.V1.Helpers
         #region [Modelos Metodos CAEA]
 
       
-        public class CAEADetRequest: CAEDetRequest
+        public class InnCAEADetRequest: CAEDetRequest
         {
             [MaxLength(14, ErrorMessage = "El CAEA no puede superar los 14 caracteres.")]
             public string CAEA { get; set; }

@@ -14,7 +14,7 @@ namespace InnercorArca.V1.Helpers
             {
                 //obtiene token y sign del archivo cache
                 if (tkValido == null)
-                    tkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(pathCache, GlobalSettings.ServiceARCA.wsfe.ToString()));
+                    tkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(pathCache, GlobalSettings.ServiceARCA.wsfe.ToString()));
 
                 // Configurar autenticación
                 object auth;

@@ -174,13 +174,14 @@ namespace InnercorArca.V1
         {
             try
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Login Verion {GetVersion()}");
+                if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {GetVersion()}");
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = !(urlWSAA.ToUpper().Contains("HOMO"));
 
                 // Asegura que el protocolo TLS 1.2 se use siempre
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 if (!Produccion) ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {Produccion}");
 
                 // Definir la ruta del archivo .cache
                 PathCache = Path.Combine(dllPath, Path.GetFileName(pathCRT).Replace(".crt", ".cache"));
@@ -189,16 +190,16 @@ namespace InnercorArca.V1
                 // Crear el cliente del servicio - revisar en el archivo .cache si el token es válido y no expiró
                 if (File.Exists(PathCache))
                 {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Login Cache existe {PathCache} {service} {urlWSAA}");
-                    string cache = HelpersArca.LeerCache(PathCache, service);
+                    if (HabilitaLog) HelpersLogger.Escribir($"Login Cache existe {PathCache} {service} {urlWSAA}"); 
+                    string cache = HelpersCache.LeerBloqueServicio(PathCache, service);
                     if (!string.IsNullOrEmpty(cache))
                     {
                         if (HabilitaLog) HelpersLogger.Escribir($"Login Cache {cache}");
-                        // Verificar si el token es válido
-                        if (HelpersArca.ValidarToken(cache))
+                        // Verificar si el token es válido 
+                        if (HelpersCache.ValidarToken(cache))
                         {
-                            if (HabilitaLog) HelpersLogger.Escribir($"Login Token Válido {cache}"); 
-                            TkValido = HelpersArca.RecuperarTokenSign(cache);
+                            if (HabilitaLog) HelpersLogger.Escribir($"Login Token Válido {cache}");
+                            TkValido = HelpersCache.RecuperarTokenSign(cache);
 
                             HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
                             return true;
@@ -231,12 +232,12 @@ namespace InnercorArca.V1
                     return false;
                 }
 
-                // Guardar el CMS en un archivo .cache
-                TkValido = HelpersArca.GenerarCache(PathCache, response, service);
+                // Guardar el CMS en un archivo .cache 
+                TkValido = HelpersCache.GuardarBloque(PathCache, response,service);
                 if (TkValido != null)
                 {
                     HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Setea Auth REquest {HelpersGlobal.SerializeToXml(TkValido)}");  
+                    if (HabilitaLog) HelpersLogger.Escribir($"Setea Auth REquest {HelpersGlobal.SerializeToXml(TkValido)}");
                     return true;
                 }
 
@@ -246,6 +247,7 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
+                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
@@ -262,8 +264,8 @@ namespace InnercorArca.V1
                 {
                     if (feAuthRequest == null)
                         HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");  
-                    
+                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+
                     objDummy = new Wsfev1.DummyResponse();
                     if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
                 }
@@ -271,7 +273,7 @@ namespace InnercorArca.V1
                 {
                     if (feAuthRequest == null)
                         HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");    
+                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
 
                     objDummy = new Wsfev1Homo.DummyResponse();
                     if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
@@ -345,7 +347,8 @@ namespace InnercorArca.V1
 
                 //obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache, service));
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
+
                 if (HabilitaLog) HelpersLogger.Escribir($"RecuperaLastCMP Token Válido");
                 // Instancia el servicio adecuado
                 object objWSFEV1;
@@ -362,7 +365,7 @@ namespace InnercorArca.V1
                     var objFERecuperaLastCbteResponse = wsfev1.FECompUltimoAutorizado((Wsfev1.FEAuthRequest)feAuthRequest, nPtoVta, nTipCom);
                     if (HabilitaLog) HelpersLogger.Escribir($"RecuperaLastCMP {HelpersGlobal.SerializeObjectAXml(objFERecuperaLastCbteResponse)}");
 
-                    HelpersArca.ProcesarRespuesta(HabilitaLog,  objFERecuperaLastCbteResponse, ref errCode, ref errDesc, ref xmlResponse);
+                    HelpersArca.ProcesarRespuesta(HabilitaLog, objFERecuperaLastCbteResponse, ref errCode, ref errDesc, ref xmlResponse);
                     if (errCode == 0) nUltNro = objFERecuperaLastCbteResponse.CbteNro;
                     if (HabilitaLog) HelpersLogger.Escribir($"ErrorCode {errCode} UltNro {nUltNro}");
                 }
@@ -419,7 +422,7 @@ namespace InnercorArca.V1
 
                 //obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache, service));
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
                 if (HabilitaLog) HelpersLogger.Escribir($"CmpConsultar Token");
 
                 // Configurar autenticación
@@ -500,7 +503,7 @@ namespace InnercorArca.V1
                 object objWSFEV1 = null;
                 ////obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache, service));
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
                 if (HabilitaLog) HelpersLogger.Escribir($"Autorizar Token Válido");
 
                 //llama a ARCA FECAESOlicitar y manda el objeto creado
@@ -637,7 +640,7 @@ namespace InnercorArca.V1
                 object objWSFEV1 = null;
                 ////obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido = HelpersArca.RecuperarTokenSign(HelpersArca.LeerCache(PathCache, service));
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
 
                 if (HabilitaLog) HelpersLogger.Escribir("TkValido CAEAInformar");
 
@@ -704,7 +707,7 @@ namespace InnercorArca.V1
         #endregion
         public string GetVersion()
         {
-            return $"1.1.41"; // Cambia esto según tu versión actual
+            return $"1.2.3"; // Cambia esto según tu versión actual
         }
 
         #region [Metodos Autorización directa ARCA]
@@ -728,7 +731,12 @@ namespace InnercorArca.V1
                     CbteTipo = nTipCom,
                 };
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 2 Cabecera {cabeceraProd.CbteTipo} {cabeceraProd.PtoVta} {cabeceraProd.CantReg}");
+                if (HabilitaLog)
+                {
+                    HelpersLogger.Escribir($"Linea 2 Cabecera {cabeceraProd.CbteTipo} {cabeceraProd.PtoVta} {cabeceraProd.CantReg}");
+                    HelpersLogger.Escribir($"Linea 2 {HelpersGlobal.SerializeObjectAXml( CAEDetRequest)}");
+                }
+
                 // Convertir CAEDetRequest a FECAEDetRequest
                 Wsfev1.FECAEDetRequest detalleProd = new Wsfev1.FECAEDetRequest
                 {
@@ -742,7 +750,7 @@ namespace InnercorArca.V1
                     ImpTotConc = CAEDetRequest.ImpTotConc,
                     ImpNeto = CAEDetRequest.ImpNeto,
                     ImpOpEx = CAEDetRequest.ImpOpEx,
-                    ImpIVA = CAEDetRequest.ImpIVA,
+                    ImpIVA = Iva,
                     ImpTrib = CAEDetRequest.ImpTrib,
                     MonId = CAEDetRequest.MonId,
                     MonCotiz = CAEDetRequest.MonCotiz,
@@ -754,11 +762,11 @@ namespace InnercorArca.V1
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Linea 2.1 Concepto {CAEDetRequest.Concepto} {CAEDetRequest.DocTipo} {CAEDetRequest.DocNro}");
                     detalleProd.FchServDesde = CAEDetRequest.FchServDesde;
-                    detalleProd.FchServHasta = CAEDetRequest.FchServHasta;
-                    detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
+                    detalleProd.FchServHasta = CAEDetRequest.FchServHasta;                    
                 }
+                if (CAEDetRequest.FchVtoPago.Length > 0) detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 3 {CAEDetRequest.Iva?.Count()} ");
+                if (HabilitaLog) HelpersLogger.Escribir($"Linea 3 Iva {CAEDetRequest.Iva?.Count()} ");
                 if (CAEDetRequest.Iva != null && CAEDetRequest.Iva.Count() > 0)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Linea 3.1 {CAEDetRequest.Iva?.Count()} ");
@@ -766,7 +774,7 @@ namespace InnercorArca.V1
                     detalleProd.Iva = CAEDetRequest.Iva.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
                 }
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 4 {CAEDetRequest.Tributos?.Count()} ");
+                if (HabilitaLog) HelpersLogger.Escribir($"Linea 4 Tributos {CAEDetRequest.Tributos?.Count()} ");
                 if (CAEDetRequest.Tributos != null && CAEDetRequest.Tributos.Count() > 0)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Linea 4.1 {CAEDetRequest.Tributos?.Count()} ");
@@ -774,7 +782,7 @@ namespace InnercorArca.V1
                     detalleProd.Tributos = CAEDetRequest.Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
                 }
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 5 {CAEDetRequest.ComprobantesAsociados?.Count()} ");
+                if (HabilitaLog) HelpersLogger.Escribir($"Linea 5 Comp Asociados {CAEDetRequest.ComprobantesAsociados?.Count()} ");
                 if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Length > 0)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Linea 5.1 {CAEDetRequest.ComprobantesAsociados?.Count()} ");
@@ -799,7 +807,7 @@ namespace InnercorArca.V1
                 if (HabilitaLog) HelpersLogger.Escribir($"Linea 7.1 {TraceBack}");
 
                 //invocar FECAESolicitar del  wsfev1 
-                objWSFEV1 = new Wsfev1Homo.Service();
+                objWSFEV1 = new Wsfev1.Service();
                 respuesta = ((dynamic)objWSFEV1).FECAESolicitar(authProd, solicitudProd);
 
                 TraceBack = $"Respuesta: {HelpersGlobal.SerializeObjectAXml(respuesta)}";
@@ -1213,21 +1221,25 @@ namespace InnercorArca.V1
                 // Verificar que la fecha esté en el formato "yyyyMMdd"
                 if (!DateTime.TryParseExact(cFchCom, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha comprobante debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha comprobante debe estar en el formato 'yyyyMMdd'.", "AgergaFactura 1");
                     return;
                 }
-                if (cSerDes.Length > 0 && !DateTime.TryParseExact(cSerDes, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha1))
+                if (cSerDes.Trim().Length > 0 && !DateTime.TryParseExact(cSerDes.Trim(), "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha1))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha desde servicio debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha desde servicio debe estar en el formato 'yyyyMMdd'.", "AgregaFactura 2");
                     return;
                 }
-                if (cSerHas.Length > 0 && !DateTime.TryParseExact(cSerHas, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha2))
+                if (cSerHas.Trim().Length > 0 && !DateTime.TryParseExact(cSerHas.Trim(), "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha2))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha hasta servicio debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha hasta servicio debe estar en el formato 'yyyyMMdd'.", "AgregaFactura 3");
                     return;
                 }
-                if (cSerVto.Length > 0 && !DateTime.TryParseExact(cSerVto, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha3))
+                if (cSerVto.Trim().Length > 0 && !DateTime.TryParseExact(cSerVto.Trim(), "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha3))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha vencimiento servicio debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha vencimiento servicio Desde debe estar en el formato 'yyyyMMdd'.", "Agrega Factura 4");
                     return;
                 }

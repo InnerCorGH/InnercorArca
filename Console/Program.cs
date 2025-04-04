@@ -12,8 +12,8 @@ namespace Console_InnercorDLL
             try
             {
 
-                TestARCA_CAEA();
-                //TestARCA_wsfev1();
+                //TestARCA_CAEA();
+                TestARCA_wsfev1();
 
                 //TestARCA_wsPadron();
             }
@@ -31,6 +31,8 @@ namespace Console_InnercorDLL
             Console.WriteLine("*********ARCA WSPadron***********");
             string pathCrt = @"K:\Trabajo.Innercor\DLL vs\InnercorSRL_20240205.crt";
             string pathKey = @"K:\Trabajo.Innercor\DLL vs\InnercorSRL_20240205.key";
+            //string pathCrt = @"K:\Trabajo.Innercor\DLL vs\AndresCastigliano_20241226_homo.crt";
+            //string pathKey = @"K:\Trabajo.Innercor\DLL vs\AndresCastigliano_20241226_homo.key";
 
             var Client = new InnercorArca.V1.wsPadron()
             {
@@ -173,7 +175,7 @@ namespace Console_InnercorDLL
             Console.WriteLine("*********ARCA WSFEV1***********");
             string pathCrt = @"K:\Trabajo.Innercor\DLL vs\AndresCastigliano_20241226_homo.crt";
             string pathKey = @"K:\Trabajo.Innercor\DLL vs\AndresCastigliano_20241226_homo.key";
-            string urlWSAA = "https://wsaahomo.afip.gov.ar/ws/services/LoginCms"; // O producción
+            string urlWSAA = "https://wsaa.afip.gov.ar/ws/services/LoginCms"; // O producción
             var Client = new InnercorArca.V1.wsfev1()
             {
                 Cuit = "20256571405"

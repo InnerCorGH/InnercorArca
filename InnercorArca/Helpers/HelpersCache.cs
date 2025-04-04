@@ -76,12 +76,11 @@ namespace InnercorArca.V1.Helpers
                 string expiredTime = doc.SelectSingleNode("//expirationTime")?.InnerText;
                 string generatedTime = doc.SelectSingleNode("//generationTime")?.InnerText;
 
-                DateTimeOffset expirationDateTime = DateTime.ParseExact(expiredTime, "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
-                DateTimeOffset generatedDateTime = DateTime.ParseExact(generatedTime, "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
+            DateTimeOffset expirationDateTime = DateTime.ParseExact(expiredTime, "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
 
-                var newLines = new string[]
-                {
-            $"{service}!{generatedDateTime:yyyyMMddHHmmss}",
+            var newLines = new string[]
+            {
+            $"{service}!{generatedTime:yyyyMMddHHmmss}",
             $"token={token}",
             $"sign={sign}",
             $"expTime={expirationDateTime.UtcDateTime:o}"

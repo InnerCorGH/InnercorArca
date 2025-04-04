@@ -177,11 +177,11 @@ namespace InnercorArca.V1
                 if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {GetVersion()}");
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = !(urlWSAA.ToUpper().Contains("HOMO"));
-                if (HabilitaLog) HelpersLogger.Escribir($"Login  Producción: {Produccion}");
 
                 // Asegura que el protocolo TLS 1.2 se use siempre
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 if (!Produccion) ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {Produccion}");
 
                 // Definir la ruta del archivo .cache
                 PathCache = Path.Combine(dllPath, Path.GetFileName(pathCRT).Replace(".crt", ".cache"));
@@ -733,7 +733,7 @@ namespace InnercorArca.V1
                 if (HabilitaLog)
                 {
                     HelpersLogger.Escribir($"Linea 2 Cabecera {cabeceraProd.CbteTipo} {cabeceraProd.PtoVta} {cabeceraProd.CantReg}");
-                    HelpersLogger.Escribir($"Linea 2 CAEDet {HelpersGlobal.SerializeToXml(CAEDetRequest)}");
+                    HelpersLogger.Escribir($"Linea 2 {HelpersGlobal.SerializeObjectAXml( CAEDetRequest)}");
                 }
                 // Convertir CAEDetRequest a FECAEDetRequest
                 Wsfev1.FECAEDetRequest detalleProd = new Wsfev1.FECAEDetRequest
@@ -762,7 +762,7 @@ namespace InnercorArca.V1
                     detalleProd.FchServDesde = CAEDetRequest.FchServDesde;
                     detalleProd.FchServHasta = CAEDetRequest.FchServHasta;
                 }
-                if (CAEDetRequest.FchVtoPago != null) detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
+                if (CAEDetRequest.FchVtoPago.Length > 0) detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
 
                 if (HabilitaLog) HelpersLogger.Escribir($"Linea 3 Iva {CAEDetRequest.Iva?.Count()} ");
                 if (CAEDetRequest.Iva != null && CAEDetRequest.Iva.Count() > 0)
@@ -780,7 +780,7 @@ namespace InnercorArca.V1
                     detalleProd.Tributos = CAEDetRequest.Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
                 }
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 5 Compr. Asociados {CAEDetRequest.ComprobantesAsociados?.Count()} ");
+                if (HabilitaLog) HelpersLogger.Escribir($"Linea 5 Comp Asociados {CAEDetRequest.ComprobantesAsociados?.Count()} ");
                 if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Length > 0)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Linea 5.1 {CAEDetRequest.ComprobantesAsociados?.Count()} ");
@@ -1219,21 +1219,25 @@ namespace InnercorArca.V1
                 // Verificar que la fecha esté en el formato "yyyyMMdd"
                 if (!DateTime.TryParseExact(cFchCom, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha comprobante debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha comprobante debe estar en el formato 'yyyyMMdd'.", "AgergaFactura 1");
                     return;
                 }
-                if (cSerDes.Trim().Length > 0 && !DateTime.TryParseExact(cSerDes, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha1))
+                if (cSerDes.Trim().Length > 0 && !DateTime.TryParseExact(cSerDes.Trim(), "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha1))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha desde servicio debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha desde servicio debe estar en el formato 'yyyyMMdd'.", "AgregaFactura 2");
                     return;
                 }
-                if (cSerHas.Trim().Length > 0 && !DateTime.TryParseExact(cSerHas, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha2))
+                if (cSerHas.Trim().Length > 0 && !DateTime.TryParseExact(cSerHas.Trim(), "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha2))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha hasta servicio debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha hasta servicio debe estar en el formato 'yyyyMMdd'.", "AgregaFactura 3");
                     return;
                 }
-                if (cSerVto.Trim().Length > 0 && !DateTime.TryParseExact(cSerVto, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha3))
+                if (cSerVto.Trim().Length > 0 && !DateTime.TryParseExact(cSerVto.Trim(), "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha3))
                 {
+                    if (HabilitaLog) HelpersLogger.Escribir($"ERROR: La fecha vencimiento servicio debe estar en el formato 'yyyyMMdd'. {cFchCom} {cSerDes} {cSerHas} {cSerVto}");
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha vencimiento servicio Desde debe estar en el formato 'yyyyMMdd'.", "Agrega Factura 4");
                     return;
                 }

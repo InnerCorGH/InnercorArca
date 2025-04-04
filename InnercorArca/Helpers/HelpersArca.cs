@@ -22,14 +22,14 @@ namespace InnercorArca.V1.Helpers
                 {
                     if (feAuthRequest == null)
                     {
-                        feAuthRequest = HelpersArca.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
+                        feAuthRequest = Procesos.ArcaCAE.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
                     }
                 }
                 else
                 {
                     if (feAuthRequest == null)
                     {
-                        feAuthRequest = HelpersArca.FEAuthRequest_Set_HOMO(tkValido.Token, tkValido.Sign, cuit);
+                        feAuthRequest = Procesos.ArcaCAEHOMO.FEAuthRequest_Set (tkValido.Token, tkValido.Sign, cuit);
                     }
                 }
             }
@@ -166,80 +166,11 @@ namespace InnercorArca.V1.Helpers
                 if (habilitaLog) HelpersLogger.Escribir($"Exception {errorDesc}");
             }
         }
-        private static Wsfev1.FEAuthRequest FEAuthRequest_Set(string Token, string Sign, long CUIT)
-        {
-            try
-            {
-                Wsfev1.FEAuthRequest FEAuthRequest = new Wsfev1.FEAuthRequest
-                {
-                    Token = Token,
-                    Sign = Sign,
-                    Cuit = (CUIT)
-                };
-
-                return FEAuthRequest;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        private static Wsfev1Homo.FEAuthRequest FEAuthRequest_Set_HOMO(string Token, string Sign, long CUIT)
-        {
-            try
-            {
-                Wsfev1Homo.FEAuthRequest FEAuthRequest = new Wsfev1Homo.FEAuthRequest
-                {
-                    Token = Token,
-                    Sign = Sign,
-                    Cuit = CUIT
-                };
-
-                return FEAuthRequest;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
+       
 
 
-        public static void InstanciaServicio(bool produccion, ref object objWSFEV1, ref object auth, ref object objReq)
-        {
-            // Instancia del servicio WSFEv1 (producción o homologación)
-
-
-            if (produccion)
-            {
-                if (objWSFEV1 == null) objWSFEV1 = new Wsfev1.Service();
-                if (objReq == null) objReq = new Wsfev1.FECompConsultaReq();
-                if (auth == null) auth = new Wsfev1.FEAuthRequest();
-            }
-            else
-            {
-                if (objWSFEV1 == null) objWSFEV1 = new Wsfev1Homo.Service();
-                if (objReq == null) objReq = new Wsfev1Homo.FECompConsultaReq();
-                if (auth == null) auth = new Wsfev1Homo.FEAuthRequest();
-            }
-        }
-        public static void InstanciaServicio(bool produccion, ref object objWSFEV1, ref object auth)
-        {
-            // Instancia del servicio WSFEv1 (producción o homologación)
-
-
-            if (produccion)
-            {
-                if (objWSFEV1 == null) objWSFEV1 = new Wsfev1.Service();
-                if (auth == null) auth = new Wsfev1.FEAuthRequest();
-            }
-            else
-            {
-                if (objWSFEV1 == null) objWSFEV1 = new Wsfev1Homo.Service();
-                if (auth == null) auth = new Wsfev1Homo.FEAuthRequest();
-            }
-        }
+      
         // Método genérico para serializar cualquier objeto a XML
-
         public static object ConvertAlicIva(InnercorArca.V1.Helpers.InnercorArcaModels.AlicIva alicIva, bool produccion)
         {
             if (produccion)

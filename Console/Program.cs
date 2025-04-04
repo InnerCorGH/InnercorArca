@@ -12,8 +12,8 @@ namespace Console_InnercorDLL
             try
             {
 
-                //TestARCA_CAEA();
-                TestARCA_wsfev1();
+                TestARCA_CAEA();
+                //TestARCA_wsfev1();
 
                 //TestARCA_wsPadron();
             }
@@ -234,12 +234,12 @@ namespace Console_InnercorDLL
             ////Console.WriteLine($"{Client.XmlResponse}");
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            ////invocar agregafactura  
-            //Client.AgregaFactura(1, 80, 27242686085, 1, 1, "20250328", 1167864.53, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            //invocar agregafactura  
+            Client.AgregaFactura(1, 80, 27242686085, CbteNro +1, CbteNro + 1, "20250328", 1167864.53, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            //Client.AgregaIVA(5, 938043.80, 196989.20);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            Client.AgregaIVA(5, 938043.80, 196989.20);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             ////Client.AgregaOpcional("20101", "0200408601000000192133");
             ////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
@@ -252,22 +252,22 @@ namespace Console_InnercorDLL
             //Client.AgregaCompAsoc (4, 99, 35, 20256571405, "20250327");
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            //Client.Autorizar(PtoVta, TipoCbte);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Autorizar Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-            //Console.WriteLine($"Trace {Client.TraceBack}");
-            //Console.WriteLine($"{Client.XmlResponse}");
+            Client.Autorizar(PtoVta, TipoCbte);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Autorizar Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            Console.WriteLine($"Trace {Client.TraceBack}");
+            Console.WriteLine($"{Client.XmlResponse}");
 
             //Console.WriteLine(Client.GetNumeroCAE());
             //Console.WriteLine(Client.GetVencimientoCAE());
 
-            //string VtoCAE = Client.GetVencimientoCAE();
-            //string Resultado = Client.GetResultado();
-            //string Reprocesar = Client.GetReprocesar();
-            //Client.AutorizarRespuesta(0, out string CAE, ref VtoCAE, ref Resultado, ref Reprocesar);
-            //Console.WriteLine ($"{CAE} {VtoCAE} {Resultado} {Reprocesar}");
+            string VtoCAE = Client.GetVencimientoCAE();
+            string Resultado = Client.GetResultado();
+            string Reprocesar = Client.GetReprocesar();
+            Client.AutorizarRespuesta(0, out string CAE, ref VtoCAE, ref Resultado, ref Reprocesar);
+            Console.WriteLine($"{CAE} {VtoCAE} {Resultado} {Reprocesar}");
 
-            //string obs= Client.AutorizarRespuestaObs(0);
-            //Console.WriteLine($"Obs: {obs}");
+            string obs = Client.AutorizarRespuestaObs(0);
+            Console.WriteLine($"Obs: {obs}");
 
 
 

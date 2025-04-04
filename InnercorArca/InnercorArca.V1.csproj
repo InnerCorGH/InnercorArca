@@ -53,6 +53,7 @@
     <Compile Include="Helpers\GlobalSettings.cs" />
     <Compile Include="Helpers\HelpersArca.cs" />
     <Compile Include="Helpers\HelpersArcaCAEA.cs" />
+    <Compile Include="Helpers\HelpersCache.cs" />
     <Compile Include="Helpers\HelpersContribuyenteCOM.cs" />
     <Compile Include="Helpers\HelpersCUIT.cs" />
     <Compile Include="Helpers\HelpersLogger.cs" />

@@ -1,11 +1,15 @@
 ﻿using InnercorArca.V1.ModelsCOM;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Text;
+using System.Web.Script.Serialization;
 using System.Web.Services.Description;
 using System.Xml;
 using System.Xml.Serialization;
+using ZXing;
 using static InnercorArca.V1.Helpers.InnercorArcaModels;
 
 namespace InnercorArca.V1.Helpers
@@ -13,7 +17,6 @@ namespace InnercorArca.V1.Helpers
     public class HelpersArca
     {
         // Método para establecer la solicitud de autenticación
-
         public static void SeteaAuthRequest(bool Produccion, ref object feAuthRequest, CacheResult tkValido, long cuit)
         {
             try
@@ -29,7 +32,7 @@ namespace InnercorArca.V1.Helpers
                 {
                     if (feAuthRequest == null)
                     {
-                        feAuthRequest = Procesos.ArcaCAEHOMO.FEAuthRequest_Set (tkValido.Token, tkValido.Sign, cuit);
+                        feAuthRequest = Procesos.ArcaCAEHOMO.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
                     }
                 }
             }
@@ -70,13 +73,13 @@ namespace InnercorArca.V1.Helpers
         }
         // Método auxiliar para manejar la respuesta de AFIP de una Solicitud de Factura
         public static void ProcesarRespuestaFactura(bool habilitaLog, dynamic objResp, ref int errorCode, ref string errorDesc,
-            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ, ref string eventDesc, GlobalSettings.TipoInformeARCA tipoInformeARCA )
+            ref string xmlResponse, ref string cae, ref string vtoCae, ref string result, ref string reProc, ref string observ, ref string eventDesc, GlobalSettings.TipoInformeARCA tipoInformeARCA)
         {
             try
             {
-               
-                if (habilitaLog) HelpersLogger. Escribir("ProcesarRespuestaFactura");
-               
+
+                if (habilitaLog) HelpersLogger.Escribir("ProcesarRespuestaFactura");
+
 
                 if (objResp.FeDetResp != null) //Solicitud procesada correctament
                 {
@@ -166,10 +169,103 @@ namespace InnercorArca.V1.Helpers
                 if (habilitaLog) HelpersLogger.Escribir($"Exception {errorDesc}");
             }
         }
-       
+
+        public static string GeneraCodigoQR(bool habilitaLOG, int nVersion, DateTime fecha, long nCuit, long ptovta, int tipoComp, long nroComp, double importe, string sMoneda, double cot, int tipoDoc,
+            long nNroDocRec, string cTipoCodAut, double nCodAut, string pathImg) // , double idMov, string dllPath)
+        {
+            try
+            {
+                //string sturl = @"https://www.afip.gob.ar/fe/qr/";
+
+                ////{"ver":1,"fecha":"2020-10-13","cuit":30000000007,"ptoVta":10,"tipoCmp":1,"nroCmp":94,"importe":12100,"moneda":"DOL","ctz":65,"tipoDocRec":80,"nroDocRec":20000000001,"tipoCodAut":"E","codAut":70417054367476}
+                //string jSon ="{ver:"+ nVersion+" ,fecha:" + fecha.ToString("yyyy-MM-dd") + ",cuit: " + cuit + ",ptoVta:" + ptovta.ToString() +
+                //        ",tipoCmp:" + tipoComp + ",nroCmp:" + nroComp.ToString() + ",importe:" + importe.ToString("#############00") + ",moneda:" + moneda + ",ctz:" + cot +
+                //        ",tipoDocRec:" + tipoDoc + ",nroDocRec:" + nroDocRec + ",tipoCodAut:" + cTipoCodAut +",codAut:" + codAut + "}";
+                //string DATOS_CMP_BASE_64 =HelpersGlobal.Base64Encode(jSon);
+
+                //string value = sturl + "?p=" + DATOS_CMP_BASE_64;
 
 
-      
+                var datosQR = new
+                {
+                    ver = nVersion,
+                    fecha = fecha.ToString("yyyy-MM-dd"),
+                    cuit =nCuit,
+                    ptoVta = ptovta,
+                    tipoCmp = tipoComp,
+                    nroCmp = nroComp,
+                    importe = double.Parse(importe.ToString("#############.00")),
+                    moneda = sMoneda,
+                    ctz = cot,
+                    tipoDocRec = tipoDoc,
+                    nroDocRec = nNroDocRec,
+                    tipoCodAut = cTipoCodAut,
+                    codAut = nCodAut
+                };
+                if (habilitaLOG) HelpersLogger.Escribir($"Datos QR {datosQR}");
+
+                var serializer = new JavaScriptSerializer();
+                string json = serializer.Serialize(datosQR);
+
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                string base64 = Convert.ToBase64String(bytes);
+
+                // Convertir a base64 URL-safe (AFIP)
+                string base64UrlSafe = base64
+                    .Replace("+", "-")
+                    .Replace("/", "_")
+                    .TrimEnd('=');
+
+                string value = $"https://www.afip.gob.ar/fe/qr/?p={base64UrlSafe}";
+
+                if (habilitaLOG) HelpersLogger.Escribir($"URL QR {value}");
+
+
+                // Generar el codigo, este metodo retorna una bitmap
+                try
+                { 
+                    var writer = new BarcodeWriter() // Si un barcodeWriter para generar un codigo QR (O.O)
+                    {
+                        Format = BarcodeFormat.QR_CODE, //setearle el tipo de codigo que generara.
+                        Options = new ZXing.Common.EncodingOptions()
+                        {
+                            Height = 138,//300,
+                            Width = 138,//300,
+                            Margin = 1, // el margen que tendra el codigo con el restro de la imagen
+                        },
+                    };
+                    if (habilitaLOG) HelpersLogger.Escribir($"Generado ImgQR {value}");
+
+                    Bitmap bitmap = writer.Write(value);
+                    if (habilitaLOG) HelpersLogger.Escribir($"Bitmap {bitmap}");
+
+                    //dejarlo donde está el path de la dll
+                    string strPathIMG = pathImg;
+
+                    ////// guardar el bitmap con el formato deseado y la locacion deseada
+                    bitmap.Save(String.Format(strPathIMG, System.Drawing.Imaging.ImageFormat.Jpeg));
+                    if (habilitaLOG) HelpersLogger.Escribir($"Bitmap guardado {strPathIMG}");
+                }
+                catch (Exception we)
+                {
+                    value = "";
+                    if (habilitaLOG) HelpersLogger.Escribir($"Error generando QR {we.Message}");
+                    throw new Exception("Error generando QR " + we.Message.ToString());
+
+                }
+
+                return value;
+            }
+            catch (Exception EX)
+            {
+
+                throw new Exception("Genera QRCode " + EX.Message.ToString());
+            }
+        }
+
+
+
+
         // Método genérico para serializar cualquier objeto a XML
         public static object ConvertAlicIva(InnercorArca.V1.Helpers.InnercorArcaModels.AlicIva alicIva, bool produccion)
         {
@@ -177,8 +273,8 @@ namespace InnercorArca.V1.Helpers
             {
                 return new Wsfev1.AlicIva
                 {
-                    BaseImp = alicIva.BaseImp ,
-                    Importe = alicIva.Importe ,
+                    BaseImp = alicIva.BaseImp,
+                    Importe = alicIva.Importe,
                     Id = alicIva.Id
                 };
             }
@@ -265,7 +361,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-  
-     
+
+
     }
 }

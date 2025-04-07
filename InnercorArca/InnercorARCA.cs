@@ -118,9 +118,7 @@ namespace InnercorArca.V1
         public string TraceBack { get; private set; } = string.Empty;
         //variables de paso Referencia que no los devuelve
         public int UltimoNumero { get; set; }
-
         public string Observaciones { get; set; }
-
         public string CbteFchGen { get; set; } = string.Empty; // Fecha de generación del comprobante (en formato "yyyyMMdd"). Se usa para la consulta de CAEA y se devuelve en la respuesta de CAEA.
         #endregion
 
@@ -191,7 +189,7 @@ namespace InnercorArca.V1
                 // Crear el cliente del servicio - revisar en el archivo .cache si el token es válido y no expiró
                 if (File.Exists(PathCache))
                 {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Login Cache existe {PathCache} {service} {urlWSAA}"); 
+                    if (HabilitaLog) HelpersLogger.Escribir($"Login Cache existe {PathCache} {service} {urlWSAA}");
                     string cache = HelpersCache.LeerBloqueServicio(PathCache, service);
                     if (!string.IsNullOrEmpty(cache))
                     {
@@ -234,7 +232,7 @@ namespace InnercorArca.V1
                 }
 
                 // Guardar el CMS en un archivo .cache 
-                TkValido = HelpersCache.GuardarBloque(PathCache, response,service);
+                TkValido = HelpersCache.GuardarBloque(PathCache, response, service);
                 if (TkValido != null)
                 {
                     HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
@@ -256,56 +254,150 @@ namespace InnercorArca.V1
 
         public bool Dummy(ref string cAppServerStatus, ref string cDbServerStatus, ref string cAuthServerStatus)
         {
+            if (HabilitaLog)
+                HelpersLogger.Escribir("Inicio Dummy");
 
-            if (HabilitaLog) HelpersLogger.Escribir("Inicio Dummy");
             try
             {
-                object objDummy;
+                // Asegurar que feAuthRequest esté seteado
+                if (feAuthRequest == null)
+                {
+                    HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+                    if (HabilitaLog)
+                        HelpersLogger.Escribir($"feAuthRequest seteado: {feAuthRequest.GetType()}");
+                }
+
+                string appServer = null;
+                string authServer = null;
+                string dbServer = null;
+
                 if (Produccion)
                 {
-                    if (feAuthRequest == null)
-                        HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+                    var wsfe = new Wsfev1.Service();
+                    var response = wsfe.FEDummy();
 
-                    objDummy = new Wsfev1.DummyResponse();
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
+                    if (response == null)
+                    {
+                        SetError(GlobalSettings.Errors.EXCEPTION, "Error al obtener respuesta del método FEDummy (Producción).", "Dummy - Producción");
+                        if (HabilitaLog) HelpersLogger.Escribir("Error: DummyResponse es null (Producción)");
+                        return false;
+                    }
+
+                    appServer = response.AppServer;
+                    authServer = response.AuthServer;
+                    dbServer = response.DbServer;
                 }
                 else
                 {
-                    if (feAuthRequest == null)
-                        HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+                    var wsfe = new Wsfev1Homo.Service();
+                    var response = wsfe.FEDummy();
 
-                    objDummy = new Wsfev1Homo.DummyResponse();
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
+                    if (response == null)
+                    {
+                        SetError(GlobalSettings.Errors.EXCEPTION, "Error al obtener respuesta del método FEDummy (Homologación).", "Dummy - Homologación");
+                        if (HabilitaLog) HelpersLogger.Escribir("Error: DummyResponse es null (Homologación)");
+                        return false;
+                    }
+
+                    appServer = response.AppServer;
+                    authServer = response.AuthServer;
+                    dbServer = response.DbServer;
                 }
-                if (objDummy == null)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
-                    SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
-                    return false;
-                }
 
-                dynamic dummy = objDummy;
-                cAppServerStatus = dummy.AppServer ?? "OK";
-                cAuthServerStatus = dummy.AuthServer ?? "OK";
-                cDbServerStatus = dummy.DbServer ?? "OK";
+                // Asignar los valores a los parámetros de salida
+                cAppServerStatus = appServer ?? "SIN VALOR";
+                cAuthServerStatus = authServer ?? "SIN VALOR";
+                cDbServerStatus = dbServer ?? "SIN VALOR";
 
+                // Guardar estados internos
                 AppServerStatus_ = cAppServerStatus;
                 AuthServerStatus_ = cAuthServerStatus;
                 DbServerStatus_ = cDbServerStatus;
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Dummy {cAppServerStatus} {cAuthServerStatus} {cDbServerStatus}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Dummy - AppServer: {cAppServerStatus} - AuthServer: {cAuthServerStatus} - DbServer: {cDbServerStatus}");
+                
 
                 return cAppServerStatus == "OK" && cAuthServerStatus == "OK" && cDbServerStatus == "OK";
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+                if (HabilitaLog)
+                {
+                    HelpersLogger.Escribir($"Error en Dummy(): {ex.Message} {ex.StackTrace}");
+                    
+                }
                 return false;
             }
         }
+
+
+        //public bool Dummy(ref string cAppServerStatus, ref string cDbServerStatus, ref string cAuthServerStatus)
+        //{
+        //    if (HabilitaLog) HelpersLogger.Escribir("Inicio Dummy");
+        //    try
+        //    {
+        //        if (Produccion)
+        //        {
+        //            if (feAuthRequest == null)
+        //                HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+
+        //            var wsfe = new Wsfev1.Service(); // o como se llame tu instancia del servicio
+        //            Wsfev1.DummyResponse objDummy = wsfe.FEDummy(); // Este método hace la llamada real al WS de AFIP
+
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
+
+        //            if (objDummy == null)
+        //            {
+        //                if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
+        //                SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
+        //                return false;
+        //            }
+
+        //            cAppServerStatus = objDummy.AppServer ?? "OK";
+        //            cAuthServerStatus = objDummy.AuthServer ?? "OK";
+        //            cDbServerStatus = objDummy.DbServer ?? "OK";
+        //        }
+        //        else
+        //        {
+        //            if (feAuthRequest == null)
+        //                HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+
+        //            var wsfe = new Wsfev1Homo.Service(); // o como se llame tu instancia del servicio
+        //            Wsfev1Homo.DummyResponse objDummyHomo = wsfe.FEDummy(); // Este método hace la llamada real al WS de AFIP
+
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummyHomo.GetType()}");
+
+        //            if (objDummyHomo == null)
+        //            {
+        //                if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
+        //                SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
+        //                return false;
+        //            }
+
+        //            cAppServerStatus = objDummyHomo.AppServer ?? "OK";
+        //            cAuthServerStatus = objDummyHomo.AuthServer ?? "OK";
+        //            cDbServerStatus = objDummyHomo.DbServer ?? "OK";
+        //        }
+
+        //        AppServerStatus_ = cAppServerStatus;
+        //        AuthServerStatus_ = cAuthServerStatus;
+        //        DbServerStatus_ = cDbServerStatus;
+
+        //        if (HabilitaLog) HelpersLogger.Escribir($"Dummy {cAppServerStatus} {cAuthServerStatus} {cDbServerStatus}");
+
+        //        return cAppServerStatus == "OK" && cAuthServerStatus == "OK" && cDbServerStatus == "OK";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+        //        SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+        //        return false;
+        //    }
+        //}
 
         public void Reset()
         {
@@ -332,7 +424,10 @@ namespace InnercorArca.V1
                 SetError(GlobalSettings.Errors.EXCEPTION, $"Error al invocar Reset {ex.Message}", ex.StackTrace);
             }
         }
-
+        public string GetVersion()
+        {
+            return $"1.2.3"; // Cambia esto según tu versión actual
+        }
         #endregion
 
         #region [METODOS Autorización y CONUSLTA  ]
@@ -490,6 +585,9 @@ namespace InnercorArca.V1
                 return false;
             }
         }
+
+
+
         #endregion
         #region [Métodos Autorizacion y Consulta CAE ]
         public bool Autorizar(int nPtoVta, int nTipCom)
@@ -518,7 +616,7 @@ namespace InnercorArca.V1
                     ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
                 else
                     //AutorizarARCA_HOMO(nPtoVta, nTipCom, objWSFEV1, out respuesta);
-                    ArcaCAEHOMO.AutorizarARCA(HabilitaLog,Cuit,CAEDetRequest,Iva,TkValido, nPtoVta, nTipCom,out respuesta);
+                    ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
 
                 if (HabilitaLog) HelpersLogger.Escribir("POS Autorización ARCA");
                 // Verificar la respuesta
@@ -655,7 +753,7 @@ namespace InnercorArca.V1
                 string errDesc = "";
 
                 //if (Produccion)
-                ArcaCAE.RegInformativoARCA (HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, out respuesta);
+                ArcaCAE.RegInformativoARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, out respuesta);
                 //RegInformativoARCA(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
                 //else
                 //    RegInformativoARCA_HOMO(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
@@ -693,9 +791,9 @@ namespace InnercorArca.V1
 
         //este metodo agrega al objeto CAEA 
         public void CAEACbteFchHsGen(string cFchCom)
-        { 
+        {
             try
-            { 
+            {
 
                 CbteFchGen = cFchCom;
                 if (HabilitaLog) HelpersLogger.Escribir($"CAEACbteFchHsGen");
@@ -708,13 +806,9 @@ namespace InnercorArca.V1
 
         }
         #endregion
-        public string GetVersion()
-        {
-            return $"1.2.3"; // Cambia esto según tu versión actual
-        }
-         
-        #region[Metodos para Setear y Devolver valores ]
 
+
+        #region[Metodos para Setear y Devolver valores ]
 
         private void SetError(GlobalSettings.Errors codigoError, string descError, string traceBack)
         {
@@ -724,7 +818,6 @@ namespace InnercorArca.V1
 
             TraceBack = traceBack;
         }
-
         public string GetAppServerStatus()
         {
             return AppServerStatus_;
@@ -737,12 +830,10 @@ namespace InnercorArca.V1
         {
             return AuthServerStatus_;
         }
-
         public int GetUltimoNumero()
         {
             return UltimoNumero;
         }
-
         public string GetFechaDesde()
         {
             return FechaDesde;
@@ -772,6 +863,10 @@ namespace InnercorArca.V1
             return Result;
         }
         public string GetReprocesar()
+        {
+            return Reproc;
+        }
+        public string GetQR()
         {
             return Reproc;
         }

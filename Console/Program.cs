@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Security.Policy;
 using System.Threading.Tasks;
 
 namespace Console_InnercorDLL
@@ -12,8 +14,8 @@ namespace Console_InnercorDLL
             try
             {
 
-                TestARCA_CAEA();
-                //TestARCA_wsfev1();
+                //TestARCA_CAEA();
+                TestARCA_wsfev1();
 
                 //TestARCA_wsPadron();
             }
@@ -54,14 +56,14 @@ namespace Console_InnercorDLL
             ;
 
             object oCont = null;
-             //Client.Consultar("25657140", ref oCont); //Monotirbuto 
+            //Client.Consultar("25657140", ref oCont); //Monotirbuto 
             //Client.Consultar("33710525809", ref oCont); // Resp Inscripto
             //Client.Consultar("44433967", ref oCont);//Cons final
             Client.Consultar("27046394106", ref oCont); // Cons final
-            //Client.Consultar("59302332", ref oCont); //COnsumidor FInal
-//            Client.Consultar("30669387128", ref oCont);//Exento
-//Client.Consultar("47711304", ref oCont);//Exento
-//Client.Consultar("6533114", ref oCont);//Fallecido 
+                                                        //Client.Consultar("59302332", ref oCont); //COnsumidor FInal
+                                                        //            Client.Consultar("30669387128", ref oCont);//Exento
+                                                        //Client.Consultar("47711304", ref oCont);//Exento
+                                                        //Client.Consultar("6533114", ref oCont);//Fallecido 
 
             if (Client.ErrorCode != 0)
                 Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
@@ -72,7 +74,7 @@ namespace Console_InnercorDLL
                 PrintProperties(oCont2);
 
                 //Console.WriteLine( oCont2.ActividadesCount());
-                
+
 
                 object oContD = Client.GetDomicilio();
                 PrintProperties(oContD);
@@ -96,15 +98,15 @@ namespace Console_InnercorDLL
         }
         static void TestARCA_CAEA()
         {
-            
-                 Console.WriteLine("*********ARCA WSFEV1 CAEA***********");
+
+            Console.WriteLine("*********ARCA WSFEV1 CAEA***********");
             string pathCrt = @"K:\Trabajo.Innercor\DLL vs\MUSICALISIMOSA_20240926.crt";
             string pathKey = @"K:\Trabajo.Innercor\DLL vs\MUSICALISIMOSA_20240926.key";
             string urlWSAA = "https://wsaa.afip.gov.ar/ws/services/LoginCms"; // O producción
             var Client = new InnercorArca.V1.wsfev1()
             {
                 Cuit = "30586954853",
-                HabilitaLog=true,
+                HabilitaLog = true,
             };
             bool isAuthenticated = Client.Login(pathCrt, pathKey, urlWSAA);
 
@@ -130,7 +132,7 @@ namespace Console_InnercorDLL
 
             // Recuperar el último comprobante autorizado
             int PtoVta = 92, TipoCbte = 7; // Factura a
-            int CbteNro = 0; string sCAE  ;
+            int CbteNro = 0; string sCAE;
 
             Client.RecuperaLastCMP(PtoVta, TipoCbte, ref CbteNro);
 
@@ -157,7 +159,7 @@ namespace Console_InnercorDLL
             Client.AgregaIVA(5, 2612.15, 548.55);
             if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            Client.AgregaCompAsoc(6, 55, 14222,long.Parse( Client.Cuit ), "20241014");
+            Client.AgregaCompAsoc(6, 55, 14222, long.Parse(Client.Cuit), "20241014");
             if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
             Client.AgregaCompAsoc(6, 53, 12130, long.Parse(Client.Cuit), "20250125");
             if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
@@ -234,42 +236,49 @@ namespace Console_InnercorDLL
             ////Console.WriteLine($"{Client.XmlResponse}");
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            //invocar agregafactura  
-            Client.AgregaFactura(1, 80, 27242686085, CbteNro +1, CbteNro + 1, "20250328", 1167864.53, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
-            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            ////invocar agregafactura  
+            //double ImpTotal = 1167864.53;
+            //Client.AgregaFactura(1, 80, 27242686085, CbteNro + 1, CbteNro + 1, "20250328",ImpTotal, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
+            //if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            Client.AgregaIVA(5, 938043.80, 196989.20);
-            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            //Client.AgregaIVA(5, 938043.80, 196989.20);
+            //if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            ////Client.AgregaOpcional("20101", "0200408601000000192133");
+            //////Client.AgregaOpcional("20101", "0200408601000000192133");
+            //////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            //////Client.AgregaOpcional("27", "SCA");
+            //////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            ////Client.AgregaTributo(7, "Percepción Tucumán", 938043.80, 3.50, 32831.53);
             ////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-            ////Client.AgregaOpcional("27", "SCA");
+
+            ////Client.AgregaCompAsoc (4, 99, 35, 20256571405, "20250327");
             ////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            //Client.AgregaTributo(7, "Percepción Tucumán", 938043.80, 3.50, 32831.53);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            //Client.Autorizar(PtoVta, TipoCbte);
+            //if (Client.ErrorCode != 0) Console.WriteLine($"Autorizar Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            //Console.WriteLine($"Trace {Client.TraceBack}");
+            //Console.WriteLine($"{Client.XmlResponse}");
 
-            //Client.AgregaCompAsoc (4, 99, 35, 20256571405, "20250327");
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            ////Console.WriteLine(Client.GetNumeroCAE());
+            ////Console.WriteLine(Client.GetVencimientoCAE());
 
-            Client.Autorizar(PtoVta, TipoCbte);
-            if (Client.ErrorCode != 0) Console.WriteLine($"Autorizar Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-            Console.WriteLine($"Trace {Client.TraceBack}");
-            Console.WriteLine($"{Client.XmlResponse}");
+            //string VtoCAE = Client.GetVencimientoCAE();
+            //string Resultado = Client.GetResultado();
+            //string Reprocesar = Client.GetReprocesar();
+            //Client.AutorizarRespuesta(0, out string CAE, ref VtoCAE, ref Resultado, ref Reprocesar);
+            //Console.WriteLine($"{CAE} {VtoCAE} {Resultado} {Reprocesar}");
 
-            //Console.WriteLine(Client.GetNumeroCAE());
-            //Console.WriteLine(Client.GetVencimientoCAE());
-
-            string VtoCAE = Client.GetVencimientoCAE();
-            string Resultado = Client.GetResultado();
-            string Reprocesar = Client.GetReprocesar();
-            Client.AutorizarRespuesta(0, out string CAE, ref VtoCAE, ref Resultado, ref Reprocesar);
-            Console.WriteLine($"{CAE} {VtoCAE} {Resultado} {Reprocesar}");
-
-            string obs = Client.AutorizarRespuestaObs(0);
-            Console.WriteLine($"Obs: {obs}");
-
-
+            //string obs = Client.AutorizarRespuestaObs(0);
+            //Console.WriteLine($"Obs: {obs}");
+            string rutaDirectorio = System.IO.Path.GetDirectoryName(    System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var ClientQR = new InnercorArca.V1.qr()
+            {
+                ArchivoQR =$"{rutaDirectorio}\\QRFactA.jpeg",
+            };
+            var gen = ClientQR.Generar(1, "20250403", 30708527501 , 99, 1, 14, 2817507, "PES", 1, 80, 30546022524, "E", 75145228762237.03);
+            //var gen = ClientQR.Generar(1, "20250328", 27242686085, PtoVta, TipoCbte, CbteNro, ImpTotal, "PES", 1,80, 27242686085, "E", 1);
+            Console.WriteLine($"QR Generado: {gen} {ClientQR.ArchivoQR}");
 
         }
     }

@@ -14,6 +14,7 @@ namespace InnercorArca.V1.Procesos
             int nPtoVta, int nTipCom, out object respuesta)
         {
             respuesta = null;
+            string traceBack = "";
             try
             {
                 if (habilitaLog) HelpersLogger.Escribir("Inicio AutorizarARCA");
@@ -32,8 +33,11 @@ namespace InnercorArca.V1.Procesos
                     CbteTipo = nTipCom
                 };
 
-                if (habilitaLog) HelpersLogger.Escribir("Linea 2 Cabecera " + cabeceraProd.CbteTipo + " " + cabeceraProd.PtoVta + " " + cabeceraProd.CantReg);
-                if (habilitaLog) HelpersLogger.Escribir("Linea 2 " + HelpersGlobal.SerializeObjectAXml(caeDetRequest));
+                traceBack = "Linea 2";
+                if (habilitaLog)
+                {
+                    HelpersLogger.Escribir($"auth {HelpersGlobal.SerializeToXml(authProd)} cabeceraProd {HelpersGlobal.SerializeToXml(cabeceraProd)} ");
+                }
 
                 var detalleProd = new Wsfev1.FECAEDetRequest
                 {
@@ -102,7 +106,9 @@ namespace InnercorArca.V1.Procesos
                     FeDetReq = new[] { detalleProd }
                 };
 
-                if (habilitaLog) HelpersLogger.Escribir("Linea 7.1 " + HelpersGlobal.SerializeObjectAXml(solicitud));
+
+                traceBack = HelpersGlobal.SerializeObjectAXml(solicitud);
+                if (habilitaLog) HelpersLogger.Escribir($"Linea 7.1 {traceBack}");
 
                 var ws = new Wsfev1.Service();
                 respuesta = ((dynamic)ws).FECAESolicitar(authProd, solicitud);

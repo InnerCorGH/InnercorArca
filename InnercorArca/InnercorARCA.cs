@@ -612,10 +612,8 @@ namespace InnercorArca.V1
                 string errDesc = "";
 
                 if (Produccion)
-                    //AutorizarARCA(nPtoVta, nTipCom, objWSFEV1, out respuesta);
                     ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
                 else
-                    //AutorizarARCA_HOMO(nPtoVta, nTipCom, objWSFEV1, out respuesta);
                     ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
 
                 if (HabilitaLog) HelpersLogger.Escribir("POS Autorización ARCA");
@@ -635,6 +633,7 @@ namespace InnercorArca.V1
                 ErrorCode = errCode;
                 ErrorDesc = errDesc;
                 Excepcion = eventDesc;
+                if (observ.Length > 0) ErrorDesc += observ;
 
                 if (HabilitaLog) HelpersLogger.Escribir($"Autorizar {result} {reproc} {cae} {vtoCae} {xmlResponse}");
                 return true;
@@ -918,7 +917,7 @@ namespace InnercorArca.V1
                     ImpNeto = nImpNet,
                     ImpOpEx = nImpOpc,
                     ImpTrib = 0.00,
-                    ImpIVA = nImpCon,
+                    ImpIVA = 0.00,
                     MonId = cMoneda,
                     MonCotiz = nCotiza,
                     CantidadMismaMonedaExt = "N",

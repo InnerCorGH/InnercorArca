@@ -209,7 +209,8 @@ namespace Console_InnercorDLL
 
             //Client.Reset();
             // Recuperar el último comprobante autorizado
-            int PtoVta = 90, TipoCbte = 1; // Factura a
+            int PtoVta = 90; 
+            int TipoCbte = 6; // Factura a
             int CbteNro = 0;
 
             Client.RecuperaLastCMP(PtoVta, TipoCbte, ref CbteNro);
@@ -217,11 +218,6 @@ namespace Console_InnercorDLL
             if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
             Console.WriteLine($"Ult Nro {TipoCbte}: {PtoVta} {Client.GetUltimoNumero()}");
 
-            //TipoCbte = 6; 
-            //TipoCbte = 1; 
-
-            //TipoCbte = 201; 
-            //TipoCbte = 3;
 
 
 
@@ -239,13 +235,13 @@ namespace Console_InnercorDLL
             ////Console.WriteLine($"{Client.XmlResponse}");
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            ////invocar agregafactura  
-            //double ImpTotal = 1167864.53;
-            //Client.AgregaFactura(1, 80, 27242686085, CbteNro + 1, CbteNro + 1, "20250328",ImpTotal, 0, 938043.80, 0, "", "", "", "PES", 1, 1);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            //invocar agregafactura  
+            double ImpTotal = 939169;
+            Client.AgregaFactura(1, 96, 23198937, CbteNro + 1, CbteNro + 1, "20250407", ImpTotal, 0, 776172.73, 0, "", "", "", "PES", 1, 1);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            //Client.AgregaIVA(5, 938043.80, 196989.20);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            Client.AgregaIVA(5, 776172.73, 162996.27);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             //////Client.AgregaOpcional("20101", "0200408601000000192133");
             //////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
@@ -258,10 +254,10 @@ namespace Console_InnercorDLL
             ////Client.AgregaCompAsoc (4, 99, 35, 20256571405, "20250327");
             ////if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            //Client.Autorizar(PtoVta, TipoCbte);
-            //if (Client.ErrorCode != 0) Console.WriteLine($"Autorizar Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-            //Console.WriteLine($"Trace {Client.TraceBack}");
-            //Console.WriteLine($"{Client.XmlResponse}");
+            Client.Autorizar(PtoVta, TipoCbte);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Autorizar Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+            Console.WriteLine($"Trace {Client.TraceBack}");
+            Console.WriteLine($"{Client.XmlResponse}");
 
             ////Console.WriteLine(Client.GetNumeroCAE());
             ////Console.WriteLine(Client.GetVencimientoCAE());
@@ -274,16 +270,16 @@ namespace Console_InnercorDLL
 
             //string obs = Client.AutorizarRespuestaObs(0);
             //Console.WriteLine($"Obs: {obs}");
-            string rutaDirectorio = System.IO.Path.GetDirectoryName(    System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var ClientQR = new InnercorArca.V1.qr()
-            {
-                ArchivoQR =$"{rutaDirectorio}\\QRFactA.jpeg",
-                HabilitaLog=true,
-            };
-            var gen = ClientQR.Generar(1, "20250224", "30708527501", 63, 6, 3620, 816540, "PES", 1, 96, 34505150, "E", 75081615152351);
-            //var gen = ClientQR.Generar(1, "20250403", 30708527501 , 99, 1, 14, 2817507, "PES", 1, 80, 30546022524, "E", 75145228762237.03);
-            //var gen = ClientQR.Generar(1, "20250328", 27242686085, PtoVta, TipoCbte, CbteNro, ImpTotal, "PES", 1,80, 27242686085, "E", 1);
-            Console.WriteLine($"QR Generado: {gen} {ClientQR.ArchivoQR}");
+            //string rutaDirectorio = System.IO.Path.GetDirectoryName(    System.Reflection.Assembly.GetExecutingAssembly().Location);
+            //var ClientQR = new InnercorArca.V1.qr()
+            //{
+            //    ArchivoQR =$"{rutaDirectorio}\\QRFactA.jpeg",
+            //    HabilitaLog=true,
+            //};
+            //var gen = ClientQR.Generar(1, "20250224", "30708527501", 63, 6, 3620, 816540, "PES", 1, 96, 34505150, "E", 75081615152351);
+            ////var gen = ClientQR.Generar(1, "20250403", 30708527501 , 99, 1, 14, 2817507, "PES", 1, 80, 30546022524, "E", 75145228762237.03);
+            ////var gen = ClientQR.Generar(1, "20250328", 27242686085, PtoVta, TipoCbte, CbteNro, ImpTotal, "PES", 1,80, 27242686085, "E", 1);
+            //Console.WriteLine($"QR Generado: {gen} {ClientQR.ArchivoQR}");
 
         }
     }

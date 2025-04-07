@@ -426,7 +426,7 @@ namespace InnercorArca.V1
         }
         public string GetVersion()
         {
-            return $"1.2.3"; // Cambia esto según tu versión actual
+            return $"1.2.4"; // Cambia esto según tu versión actual
         }
         #endregion
 

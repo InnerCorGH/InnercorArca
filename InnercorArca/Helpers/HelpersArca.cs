@@ -170,7 +170,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-        public static string GeneraCodigoQR(bool habilitaLOG, int nVersion, DateTime fecha, long nCuit, long ptovta, int tipoComp, long nroComp, double importe, string sMoneda, double cot, int tipoDoc,
+        public static string GeneraCodigoQR(bool habilitaLOG, int nVersion, DateTime fecha, long nCuit, long ptovta, int tipoComp, long nroComp, double importeTotal, string sMoneda, double cot, int tipoDoc,
             long nNroDocRec, string cTipoCodAut, double nCodAut, string pathImg) // , double idMov, string dllPath)
         {
             try
@@ -194,7 +194,7 @@ namespace InnercorArca.V1.Helpers
                     ptoVta = ptovta,
                     tipoCmp = tipoComp,
                     nroCmp = nroComp,
-                    importe = double.Parse(importe.ToString("#############.00")),
+                    importe =  importeTotal,
                     moneda = sMoneda,
                     ctz = cot,
                     tipoDocRec = tipoDoc,
@@ -211,12 +211,13 @@ namespace InnercorArca.V1.Helpers
                 string base64 = Convert.ToBase64String(bytes);
 
                 // Convertir a base64 URL-safe (AFIP)
-                string base64UrlSafe = base64
-                    .Replace("+", "-")
-                    .Replace("/", "_")
-                    .TrimEnd('=');
+                //string base64UrlSafe = base64
+                //    .Replace("+", "-")
+                //    .Replace("/", "_")
+                //    .TrimEnd('=');
 
-                string value = $"https://www.afip.gob.ar/fe/qr/?p={base64UrlSafe}";
+                //string value = $"https://www.afip.gob.ar/fe/qr/?p={base64UrlSafe}";
+                string value = $"https://www.afip.gob.ar/fe/qr/?p={base64}";
 
                 if (habilitaLOG) HelpersLogger.Escribir($"URL QR {value}");
 

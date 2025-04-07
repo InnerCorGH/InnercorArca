@@ -9,10 +9,11 @@ namespace Console_InnercorDLL
     {
         static Task Main()
         {
-
-
             try
             {
+                
+                // Print the DLL version
+                Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionInfo.GetVersionDLL()}");
 
                 //TestARCA_CAEA();
                 TestARCA_wsfev1();
@@ -26,6 +27,8 @@ namespace Console_InnercorDLL
 
             return Task.CompletedTask;
         }
+
+        
 
         static void TestARCA_wsPadron()
         {
@@ -275,8 +278,10 @@ namespace Console_InnercorDLL
             var ClientQR = new InnercorArca.V1.qr()
             {
                 ArchivoQR =$"{rutaDirectorio}\\QRFactA.jpeg",
+                HabilitaLog=true,
             };
-            var gen = ClientQR.Generar(1, "20250403", 30708527501 , 99, 1, 14, 2817507, "PES", 1, 80, 30546022524, "E", 75145228762237.03);
+            var gen = ClientQR.Generar(1, "20250224", "30708527501", 63, 6, 3620, 816540, "PES", 1, 96, 34505150, "E", 75081615152351);
+            //var gen = ClientQR.Generar(1, "20250403", 30708527501 , 99, 1, 14, 2817507, "PES", 1, 80, 30546022524, "E", 75145228762237.03);
             //var gen = ClientQR.Generar(1, "20250328", 27242686085, PtoVta, TipoCbte, CbteNro, ImpTotal, "PES", 1,80, 27242686085, "E", 1);
             Console.WriteLine($"QR Generado: {gen} {ClientQR.ArchivoQR}");
 

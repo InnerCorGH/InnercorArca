@@ -69,6 +69,9 @@
     <Compile Include="Helpers\HelpersGlobal.cs" />
     <Compile Include="Helpers\HelpersCert.cs" />
     <Compile Include="Helpers\InnercorArcaModels.cs" />
+    <Compile Include="K:/Trabajo.Innercor/InnercorArca/InnercorArca/\VersionInfo.cs">
+      <Link>VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="ModelsCOM\ContribuyenteCOM.cs" />
     <Compile Include="Procesos\ArcaCAE.cs" />
     <Compile Include="Procesos\ArcaCAEHomo.cs" />

@@ -44,7 +44,7 @@ namespace InnercorArca.V1
         bool ModoProduccion { get; set; }
         [DispId(12)]
         string Cuit { get; set; }
-        [DispId(31)]
+        [DispId(13)]
         bool HabilitaLog { get; set; }
     }
 
@@ -72,10 +72,7 @@ namespace InnercorArca.V1
         #region[Declaración Variables Internas]
         internal bool Produccion { get; set; } = false;
         internal string PathCache { get; private set; } = string.Empty;
-
-        // Instancia FEAuthRequest correctamente
-        internal object feAuthRequest;
-
+         
         // Variable estática para que persista mientras la DLL esté en uso
         private static CacheResult TkValido;
         internal ContribuyenteCOM Contribuyente { get; private set; }
@@ -100,6 +97,8 @@ namespace InnercorArca.V1
             {
                 if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {GetVersion()}");
 
+                if (HabilitaLog) HelpersLogger.Escribir($"Login Verion {GetVersion()}");
+
                 string urlWSAA = string.Empty;
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = ModoProduccion;
@@ -118,8 +117,9 @@ namespace InnercorArca.V1
                 // Crear el cliente del servicio - revisar en el archivo .cache si el token es válido y no expiró
                 if (File.Exists(PathCache))
                 {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Login Cache existe {PathCache} {service} {urlWSAA}");
+                    //string cache = HelpersArca.LeerCache(PathCache, service);
                     string cache = HelpersCache.LeerBloqueServicio(PathCache, service);
+
                     if (!string.IsNullOrEmpty(cache))
                     {
                         if (HabilitaLog) HelpersLogger.Escribir($"Login Cache {cache}");
@@ -127,10 +127,9 @@ namespace InnercorArca.V1
                         if (HelpersCache.ValidarToken(cache))
                         {
                             if (HabilitaLog) HelpersLogger.Escribir($"Login Token Válido {cache}");
-
-                            // Si el token es válido, recuperar el token y sign
                             TkValido = HelpersCache.RecuperarTokenSign(cache);
-                            //HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+
+
                             return true;
                         }
                         
@@ -145,14 +144,12 @@ namespace InnercorArca.V1
                     return false;
                 }
 
-
                 if (!certificate.HasPrivateKey)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Login El certificado no contiene clave privada {pathCRT} {pathKey}");
                     SetError(GlobalSettings.Errors.CERT_ERROR, "El certificado no contiene clave privada.", "Login 2");
                     return false;
                 }
-
 
                 LoginTicket objTicketRespuesta = new LoginTicket();
                 string response = objTicketRespuesta.ObtenerLoginTicketResponse(service, urlWSAA, pathCRT, pathKey, true, Produccion);
@@ -165,7 +162,9 @@ namespace InnercorArca.V1
                 }
 
                 // Guardar el CMS en un archivo .cache
-                TkValido=HelpersCache.GuardarBloque(PathCache, response, service);
+                TkValido = HelpersCache.GuardarBloque(PathCache, response, service);
+
+                if (HabilitaLog) HelpersLogger.Escribir($"Login Token Válido ");
                 return true;
             }
             catch (Exception ex)
@@ -182,7 +181,7 @@ namespace InnercorArca.V1
             {
                 // obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio (PathCache, service));
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
 
                 dynamic response = null;
                 bool success = false;

@@ -1,4 +1,5 @@
 ﻿using InnercorArca.V1.Helpers;
+using InnercorArca.V1.Procesos;
 using System;
 using System.IO;
 using System.Linq;
@@ -117,9 +118,7 @@ namespace InnercorArca.V1
         public string TraceBack { get; private set; } = string.Empty;
         //variables de paso Referencia que no los devuelve
         public int UltimoNumero { get; set; }
-
         public string Observaciones { get; set; }
-
         public string CbteFchGen { get; set; } = string.Empty; // Fecha de generación del comprobante (en formato "yyyyMMdd"). Se usa para la consulta de CAEA y se devuelve en la respuesta de CAEA.
         #endregion
 
@@ -195,7 +194,7 @@ namespace InnercorArca.V1
                     if (!string.IsNullOrEmpty(cache))
                     {
                         if (HabilitaLog) HelpersLogger.Escribir($"Login Cache {cache}");
-                        // Verificar si el token es válido
+                        // Verificar si el token es válido 
                         if (HelpersCache.ValidarToken(cache))
                         {
                             if (HabilitaLog) HelpersLogger.Escribir($"Login Token Válido {cache}");
@@ -232,7 +231,7 @@ namespace InnercorArca.V1
                     return false;
                 }
 
-                // Guardar el CMS en un archivo .cache
+                // Guardar el CMS en un archivo .cache 
                 TkValido = HelpersCache.GuardarBloque(PathCache, response, service);
                 if (TkValido != null)
                 {
@@ -255,56 +254,150 @@ namespace InnercorArca.V1
 
         public bool Dummy(ref string cAppServerStatus, ref string cDbServerStatus, ref string cAuthServerStatus)
         {
+            if (HabilitaLog)
+                HelpersLogger.Escribir("Inicio Dummy");
 
-            if (HabilitaLog) HelpersLogger.Escribir("Inicio Dummy");
             try
             {
-                object objDummy;
+                // Asegurar que feAuthRequest esté seteado
+                if (feAuthRequest == null)
+                {
+                    HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+                    if (HabilitaLog)
+                        HelpersLogger.Escribir($"feAuthRequest seteado: {feAuthRequest.GetType()}");
+                }
+
+                string appServer = null;
+                string authServer = null;
+                string dbServer = null;
+
                 if (Produccion)
                 {
-                    if (feAuthRequest == null)
-                        HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+                    var wsfe = new Wsfev1.Service();
+                    var response = wsfe.FEDummy();
 
-                    objDummy = new Wsfev1.DummyResponse();
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
+                    if (response == null)
+                    {
+                        SetError(GlobalSettings.Errors.EXCEPTION, "Error al obtener respuesta del método FEDummy (Producción).", "Dummy - Producción");
+                        if (HabilitaLog) HelpersLogger.Escribir("Error: DummyResponse es null (Producción)");
+                        return false;
+                    }
+
+                    appServer = response.AppServer;
+                    authServer = response.AuthServer;
+                    dbServer = response.DbServer;
                 }
                 else
                 {
-                    if (feAuthRequest == null)
-                        HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+                    var wsfe = new Wsfev1Homo.Service();
+                    var response = wsfe.FEDummy();
 
-                    objDummy = new Wsfev1Homo.DummyResponse();
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
+                    if (response == null)
+                    {
+                        SetError(GlobalSettings.Errors.EXCEPTION, "Error al obtener respuesta del método FEDummy (Homologación).", "Dummy - Homologación");
+                        if (HabilitaLog) HelpersLogger.Escribir("Error: DummyResponse es null (Homologación)");
+                        return false;
+                    }
+
+                    appServer = response.AppServer;
+                    authServer = response.AuthServer;
+                    dbServer = response.DbServer;
                 }
-                if (objDummy == null)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
-                    SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
-                    return false;
-                }
 
-                dynamic dummy = objDummy;
-                cAppServerStatus = dummy.AppServer ?? "OK";
-                cAuthServerStatus = dummy.AuthServer ?? "OK";
-                cDbServerStatus = dummy.DbServer ?? "OK";
+                // Asignar los valores a los parámetros de salida
+                cAppServerStatus = appServer ?? "SIN VALOR";
+                cAuthServerStatus = authServer ?? "SIN VALOR";
+                cDbServerStatus = dbServer ?? "SIN VALOR";
 
+                // Guardar estados internos
                 AppServerStatus_ = cAppServerStatus;
                 AuthServerStatus_ = cAuthServerStatus;
                 DbServerStatus_ = cDbServerStatus;
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Dummy {cAppServerStatus} {cAuthServerStatus} {cDbServerStatus}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Dummy - AppServer: {cAppServerStatus} - AuthServer: {cAuthServerStatus} - DbServer: {cDbServerStatus}");
+                
 
                 return cAppServerStatus == "OK" && cAuthServerStatus == "OK" && cDbServerStatus == "OK";
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+                if (HabilitaLog)
+                {
+                    HelpersLogger.Escribir($"Error en Dummy(): {ex.Message} {ex.StackTrace}");
+                    
+                }
                 return false;
             }
         }
+
+
+        //public bool Dummy(ref string cAppServerStatus, ref string cDbServerStatus, ref string cAuthServerStatus)
+        //{
+        //    if (HabilitaLog) HelpersLogger.Escribir("Inicio Dummy");
+        //    try
+        //    {
+        //        if (Produccion)
+        //        {
+        //            if (feAuthRequest == null)
+        //                HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+
+        //            var wsfe = new Wsfev1.Service(); // o como se llame tu instancia del servicio
+        //            Wsfev1.DummyResponse objDummy = wsfe.FEDummy(); // Este método hace la llamada real al WS de AFIP
+
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
+
+        //            if (objDummy == null)
+        //            {
+        //                if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
+        //                SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
+        //                return false;
+        //            }
+
+        //            cAppServerStatus = objDummy.AppServer ?? "OK";
+        //            cAuthServerStatus = objDummy.AuthServer ?? "OK";
+        //            cDbServerStatus = objDummy.DbServer ?? "OK";
+        //        }
+        //        else
+        //        {
+        //            if (feAuthRequest == null)
+        //                HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
+
+        //            var wsfe = new Wsfev1Homo.Service(); // o como se llame tu instancia del servicio
+        //            Wsfev1Homo.DummyResponse objDummyHomo = wsfe.FEDummy(); // Este método hace la llamada real al WS de AFIP
+
+        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummyHomo.GetType()}");
+
+        //            if (objDummyHomo == null)
+        //            {
+        //                if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
+        //                SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
+        //                return false;
+        //            }
+
+        //            cAppServerStatus = objDummyHomo.AppServer ?? "OK";
+        //            cAuthServerStatus = objDummyHomo.AuthServer ?? "OK";
+        //            cDbServerStatus = objDummyHomo.DbServer ?? "OK";
+        //        }
+
+        //        AppServerStatus_ = cAppServerStatus;
+        //        AuthServerStatus_ = cAuthServerStatus;
+        //        DbServerStatus_ = cDbServerStatus;
+
+        //        if (HabilitaLog) HelpersLogger.Escribir($"Dummy {cAppServerStatus} {cAuthServerStatus} {cDbServerStatus}");
+
+        //        return cAppServerStatus == "OK" && cAuthServerStatus == "OK" && cDbServerStatus == "OK";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+        //        SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
+        //        return false;
+        //    }
+        //}
 
         public void Reset()
         {
@@ -331,7 +424,10 @@ namespace InnercorArca.V1
                 SetError(GlobalSettings.Errors.EXCEPTION, $"Error al invocar Reset {ex.Message}", ex.StackTrace);
             }
         }
-
+        public string GetVersion()
+        {
+            return $"1.2.4"; // Cambia esto según tu versión actual
+        }
         #endregion
 
         #region [METODOS Autorización y CONUSLTA  ]
@@ -348,6 +444,7 @@ namespace InnercorArca.V1
                 //obtiene token y sign del archivo cache
                 if (TkValido == null)
                     TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
+
                 if (HabilitaLog) HelpersLogger.Escribir($"RecuperaLastCMP Token Válido");
                 // Instancia el servicio adecuado
                 object objWSFEV1;
@@ -488,7 +585,9 @@ namespace InnercorArca.V1
                 return false;
             }
         }
+
         #endregion
+
         #region [Métodos Autorizacion y Consulta CAE ]
         public bool Autorizar(int nPtoVta, int nTipCom)
         {// llama al FECAESOlcicitar 
@@ -499,10 +598,10 @@ namespace InnercorArca.V1
             Reproc = "";
             try
             {
-                object objWSFEV1 = null;
+                //object objWSFEV1 = null;
                 ////obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));     
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
                 if (HabilitaLog) HelpersLogger.Escribir($"Autorizar Token Válido");
 
                 //llama a ARCA FECAESOlicitar y manda el objeto creado
@@ -512,10 +611,11 @@ namespace InnercorArca.V1
                 string errDesc = "";
 
                 if (Produccion)
-                    AutorizarARCA(nPtoVta, nTipCom, objWSFEV1, out respuesta);
+                    ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
                 else
-                    AutorizarARCA_HOMO(nPtoVta, nTipCom, objWSFEV1, out respuesta);
-                if (HabilitaLog) HelpersLogger.Escribir("Autorización ARCA");
+                    ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
+
+                if (HabilitaLog) HelpersLogger.Escribir("POS Autorización ARCA");
                 // Verificar la respuesta
                 string cae = ""; string vtoCae = ""; string result = ""; string reproc = ""; string xmlResponse = ""; string observ = ""; string eventDesc = "";
                 HelpersArca.ProcesarRespuestaFactura(HabilitaLog, respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result, ref reproc, ref observ, ref eventDesc,
@@ -532,6 +632,7 @@ namespace InnercorArca.V1
                 ErrorCode = errCode;
                 ErrorDesc = errDesc;
                 Excepcion = eventDesc;
+                if (observ.Length > 0) ErrorDesc += observ;
 
                 if (HabilitaLog) HelpersLogger.Escribir($"Autorizar {result} {reproc} {cae} {vtoCae} {xmlResponse}");
                 return true;
@@ -569,7 +670,7 @@ namespace InnercorArca.V1
             NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";
             try
             {
-                bool resp = HelpersArcaCAEA.MetodoCAEA(GlobalSettings.MetCAEA.CAEACONSULTAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
+                bool resp = ArcaCAEA.MetodoCAEA(GlobalSettings.MetCAEA.CAEACONSULTAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
                   out int errCode, out string errDesc, out string xmlResponse, out string trackBack, HabilitaLog);
 
                 SetError((GlobalSettings.Errors)errCode, errDesc, $"Errores Respuesta FECAEAConsultar {trackBack}");
@@ -600,7 +701,7 @@ namespace InnercorArca.V1
             try
             {
                 if (HabilitaLog) HelpersLogger.Escribir("Inicio CAEASolicitar");
-                bool resp = HelpersArcaCAEA.MetodoCAEA(GlobalSettings.MetCAEA.CAEASOLICITAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
+                bool resp = ArcaCAEA.MetodoCAEA(GlobalSettings.MetCAEA.CAEASOLICITAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
                      out int errCode, out string errDesc, out string xmlResponse, out string trackBack, HabilitaLog);
 
                 SetError((GlobalSettings.Errors)errCode, errDesc, $"Errores Respuesta FECAEASolicitar {trackBack}");
@@ -636,10 +737,10 @@ namespace InnercorArca.V1
             try
             {
                 if (HabilitaLog) HelpersLogger.Escribir("Inicio CAEAInformar");
-                object objWSFEV1 = null;
+                //object objWSFEV1 = null;
                 ////obtiene token y sign del archivo cache
                 if (TkValido == null)
-                    TkValido=HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service)); 
+                    TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
 
                 if (HabilitaLog) HelpersLogger.Escribir("TkValido CAEAInformar");
 
@@ -650,7 +751,8 @@ namespace InnercorArca.V1
                 string errDesc = "";
 
                 //if (Produccion)
-                RegInformativoARCA(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
+                ArcaCAE.RegInformativoARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, out respuesta);
+                //RegInformativoARCA(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
                 //else
                 //    RegInformativoARCA_HOMO(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
 
@@ -688,10 +790,8 @@ namespace InnercorArca.V1
         //este metodo agrega al objeto CAEA 
         public void CAEACbteFchHsGen(string cFchCom)
         {
-
             try
             {
-                ////Convertir CAEADetRequest a FECAEDetRequest
 
                 CbteFchGen = cFchCom;
                 if (HabilitaLog) HelpersLogger.Escribir($"CAEACbteFchHsGen");
@@ -704,449 +804,9 @@ namespace InnercorArca.V1
 
         }
         #endregion
-        public string GetVersion()
-        {
-            return $"1.2.4"; // Cambia esto según tu versión actual
-        }
-
-        #region [Metodos Autorización directa ARCA]
-        private void AutorizarARCA(int nPtoVta, int nTipCom, object objWSFEV1, out object respuesta)
-        {
-            if (HabilitaLog) HelpersLogger.Escribir($"Inicio AutorizarARCA {nPtoVta} {nTipCom}");
-            try
-            {
-                if (HabilitaLog) HelpersLogger.Escribir("Linea 1");
-                var authProd = new Wsfev1.FEAuthRequest
-                {
-                    Token = TkValido.Token,
-                    Sign = TkValido.Sign,
-                    Cuit = Convert.ToInt64(Cuit)
-                };
-
-                Wsfev1.FECAECabRequest cabeceraProd = new Wsfev1.FECAECabRequest
-                {
-                    CantReg = 1,
-                    PtoVta = nPtoVta,
-                    CbteTipo = nTipCom,
-                };
-
-                if (HabilitaLog)
-                {
-                    HelpersLogger.Escribir($"Linea 2 Cabecera {cabeceraProd.CbteTipo} {cabeceraProd.PtoVta} {cabeceraProd.CantReg}");
-                    HelpersLogger.Escribir($"Linea 2 {HelpersGlobal.SerializeObjectAXml( CAEDetRequest)}");
-                }
-                // Convertir CAEDetRequest a FECAEDetRequest
-                Wsfev1.FECAEDetRequest detalleProd = new Wsfev1.FECAEDetRequest
-                {
-                    Concepto = CAEDetRequest.Concepto,
-                    DocTipo = CAEDetRequest.DocTipo,
-                    DocNro = CAEDetRequest.DocNro,
-                    CbteDesde = CAEDetRequest.CbteDesde,
-                    CbteHasta = CAEDetRequest.CbteHasta,
-                    CbteFch = CAEDetRequest.CbteFch,
-                    ImpTotal = CAEDetRequest.ImpTotal,
-                    ImpTotConc = CAEDetRequest.ImpTotConc,
-                    ImpNeto = CAEDetRequest.ImpNeto,
-                    ImpOpEx = CAEDetRequest.ImpOpEx,
-                    ImpIVA = Iva,
-                    ImpTrib = CAEDetRequest.ImpTrib,
-                    MonId = CAEDetRequest.MonId,
-                    MonCotiz = CAEDetRequest.MonCotiz,
-                    //MonCotizSpecified = true,
-                    //CondicionIVAReceptorId = CAEDetRequest.CondicionIvaReceptor
-                };
-
-                if (CAEDetRequest.Concepto == 2 || CAEDetRequest.Concepto == 3)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 2.1 Concepto {CAEDetRequest.Concepto} {CAEDetRequest.DocTipo} {CAEDetRequest.DocNro}");
-                    detalleProd.FchServDesde = CAEDetRequest.FchServDesde;
-                    detalleProd.FchServHasta = CAEDetRequest.FchServHasta;
-                }
-                if (CAEDetRequest.FchVtoPago.Length > 0) detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 3 Iva {CAEDetRequest.Iva?.Count()} ");
-                if (CAEDetRequest.Iva != null && CAEDetRequest.Iva.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 3.1 {CAEDetRequest.Iva?.Count()} ");
-                    detalleProd.ImpIVA = CAEDetRequest.Iva?.Sum(t => t.Importe) ?? 0;
-                    detalleProd.Iva = CAEDetRequest.Iva.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 4 Tributos {CAEDetRequest.Tributos?.Count()} ");
-                if (CAEDetRequest.Tributos != null && CAEDetRequest.Tributos.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 4.1 {CAEDetRequest.Tributos?.Count()} ");
-                    detalleProd.ImpTrib = CAEDetRequest.Tributos?.Sum(t => t.Importe) ?? 0; //CAEDetRequest.ImpTrib;
-                    detalleProd.Tributos = CAEDetRequest.Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 5 Comp Asociados {CAEDetRequest.ComprobantesAsociados?.Count()} ");
-                if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Length > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 5.1 {CAEDetRequest.ComprobantesAsociados?.Count()} ");
-                    detalleProd.CbtesAsoc = CAEDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 6 Opcionales {CAEDetRequest.Opcionales?.Count()} ");
-                if (CAEDetRequest.Opcionales != null && CAEDetRequest.Opcionales.Length > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 6.1 Opcionales {CAEDetRequest.Opcionales?.Count()} ");
-                    detalleProd.Opcionales = CAEDetRequest.Opcionales.Select(opcional => (Wsfev1.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 7 ");
-                var solicitudProd = new Wsfev1.FECAERequest
-                {
-                    FeCabReq = cabeceraProd, //CAbecera
-                    FeDetReq = new Wsfev1.FECAEDetRequest[] { detalleProd } //detalle
-                };
-
-                TraceBack = HelpersGlobal.SerializeObjectAXml(solicitudProd);
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 7.1 {TraceBack}");
-
-                //invocar FECAESolicitar del  wsfev1 
-                objWSFEV1 = new Wsfev1.Service();
-                respuesta = ((dynamic)objWSFEV1).FECAESolicitar(authProd, solicitudProd);
-
-                TraceBack = $"Respuesta: {HelpersGlobal.SerializeObjectAXml(respuesta)}";
-
-            }
-            catch (Exception ex)
-            {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error AutorizarARCA Exception {ex.Message} {TraceBack} {ex.StackTrace}");
-                SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
-                respuesta = null;
-            }
-        }
-        private void RegInformativoARCA(int nPtoVta, int nTipCom, string sCAE, object objWSFEV1, out object respuesta)
-        {
-            try
-            {
-
-                if (HabilitaLog) HelpersLogger.Escribir("Inicio RegInformativoARCA ");
-                var authProd = new Wsfev1.FEAuthRequest
-                {
-                    Token = TkValido.Token,
-                    Sign = TkValido.Sign,
-                    Cuit = Convert.ToInt64(Cuit)
-                };
-
-                Wsfev1.FECAEACabRequest cabeceraProd = new Wsfev1.FECAEACabRequest
-                {
-                    CantReg = 1,
-                    PtoVta = nPtoVta,
-                    CbteTipo = nTipCom
-                };
-                if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Auth CabReq");
-
-                //Convertir CAEADetRequest a FECAEDetRequest
-                if (HabilitaLog) HelpersLogger.Escribir($"Antes Copy {HelpersGlobal.SerializeToXml(CAEDetRequest)}");
-                if (InnCAEADetReq == null)
-                {
-                    InnCAEADetReq = CAEDetRequest.CopyToDerived<CAEDetRequest, InnCAEADetRequest>();
-                    if (HabilitaLog) HelpersLogger.Escribir($"Pos Copy {HelpersGlobal.SerializeToXml(InnCAEADetReq)}");
-                }
-                InnCAEADetReq.CAEA = sCAE;
-                InnCAEADetReq.CbteFchHsGen = CbteFchGen;
-
-                Wsfev1.FECAEADetRequest detalleProd = new Wsfev1.FECAEADetRequest
-                {
-                    Concepto = InnCAEADetReq.Concepto,
-                    DocTipo = InnCAEADetReq.DocTipo,
-                    DocNro = InnCAEADetReq.DocNro,
-                    CbteDesde = InnCAEADetReq.CbteDesde,
-                    CbteHasta = InnCAEADetReq.CbteHasta,
-                    CbteFch = InnCAEADetReq.CbteFch,
-                    ImpTotal = InnCAEADetReq.ImpTotal,
-                    ImpTotConc = InnCAEADetReq.ImpTotConc,
-                    ImpNeto = InnCAEADetReq.ImpNeto,
-                    ImpOpEx = InnCAEADetReq.ImpOpEx,
-                    ImpIVA = InnCAEADetReq.ImpIVA,
-                    MonCotiz = InnCAEADetReq.MonCotiz,
-                    //MonCotizSpecified = true,
-                    MonId = InnCAEADetReq.MonId,
-                    //CanMisMonExt = CAEDetRequest.CantidadMismaMonedaExt,                    
-                    //CondicionIVAReceptorId = CAEADetReq.CondicionIvaReceptor,
-                    CAEA = InnCAEADetReq.CAEA,
-                    CbteFchHsGen = InnCAEADetReq.CbteFchHsGen
-                };
-
-                if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 2");
-                if (InnCAEADetReq.Concepto == 2 || InnCAEADetReq.Concepto == 3)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 2.1");
-                    detalleProd.FchServDesde = InnCAEADetReq.FchServDesde;
-                    detalleProd.FchServHasta = InnCAEADetReq.FchServHasta;
-                }
-                if (InnCAEADetReq.FchVtoPago.Length > 0) detalleProd.FchVtoPago = InnCAEADetReq.FchVtoPago;
-
-                if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 3");
-                if (InnCAEADetReq.Iva != null && InnCAEADetReq.Iva.Count() > 0)
-                {
-
-                    if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 3.1");
-                    detalleProd.ImpIVA = InnCAEADetReq.Iva?.Sum(t => t.Importe) ?? 0;
-                    detalleProd.Iva = InnCAEADetReq.Iva.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
-
-                }
-                if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 4");
-                if (InnCAEADetReq.Tributos != null && InnCAEADetReq.Tributos.Count() > 0)
-
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 4.1");
-                    detalleProd.ImpTrib = InnCAEADetReq.Tributos?.Sum(t => t.Importe) ?? 0;
-                    detalleProd.Tributos = InnCAEADetReq.Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
-                }
-                if (HabilitaLog) HelpersLogger.Escribir($"RegInformativoARCA Linea 5 {InnCAEADetReq.ComprobantesAsociados.Count()}");
-                if (InnCAEADetReq.ComprobantesAsociados != null && InnCAEADetReq.ComprobantesAsociados.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 5.1 {InnCAEADetReq.ComprobantesAsociados.Count()}");
-                    detalleProd.CbtesAsoc = InnCAEADetReq.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
-                }
-                if (HabilitaLog) HelpersLogger.Escribir("Linea 6");
-                if (InnCAEADetReq.Opcionales != null && InnCAEADetReq.Opcionales.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir("Linea 6.1");
-                    detalleProd.Opcionales = InnCAEADetReq.Opcionales.Select(opcional => (Wsfev1.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
-                }
 
 
-                if (HabilitaLog) HelpersLogger.Escribir("Linea 7");
-                var solicitudProd = new Wsfev1.FECAEARequest
-                {
-                    FeCabReq = cabeceraProd, //CAbecera
-                    FeDetReq = new Wsfev1.FECAEADetRequest[] { detalleProd } //detalle
-                };
-                if (HabilitaLog) HelpersLogger.Escribir(HelpersGlobal.SerializeObjectAXml(solicitudProd));
-
-                //invocar FECAESolicitar del wsfev1 
-                objWSFEV1 = new Wsfev1.Service();
-                respuesta = ((dynamic)objWSFEV1).FECAEARegInformativo(authProd, solicitudProd);
-                if (HabilitaLog) HelpersLogger.Escribir("Linea 8");
-            }
-            catch (Exception ex)
-            {
-                if (HabilitaLog) HelpersLogger.Escribir($"ERROR: {ex.Message} {TraceBack} {ex.StackTrace}");
-                SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
-                respuesta = null;
-            }
-        }
-
-
-        private void AutorizarARCA_HOMO(int nPtoVta, int nTipCom, object objWSFEV1, out object respuesta)
-        {
-            if (HabilitaLog) HelpersLogger.Escribir("Inicio AutorizarARCA_HOMO");
-            try
-            {
-                var authProd = new Wsfev1Homo.FEAuthRequest
-                {
-                    Token = TkValido.Token,
-                    Sign = TkValido.Sign,
-                    Cuit = Convert.ToInt64(Cuit)
-                };
-
-                Wsfev1Homo.FECAECabRequest cabeceraProd = new Wsfev1Homo.FECAECabRequest
-                {
-                    CantReg = 1,
-                    PtoVta = nPtoVta,
-                    CbteTipo = nTipCom
-                };
-                TraceBack = "Linea 2";
-                if (HabilitaLog) HelpersLogger.Escribir($"auth {HelpersGlobal.SerializeToXml(authProd)} cabeceraProd {HelpersGlobal.SerializeToXml(cabeceraProd)} ");
-
-                //Convertir CAEDetRequest a FECAEDetRequest
-                Wsfev1Homo.FECAEDetRequest detalleProd = new Wsfev1Homo.FECAEDetRequest
-                {
-                    Concepto = CAEDetRequest.Concepto,
-                    DocTipo = CAEDetRequest.DocTipo,
-                    DocNro = CAEDetRequest.DocNro,
-                    CbteDesde = CAEDetRequest.CbteDesde,
-                    CbteHasta = CAEDetRequest.CbteHasta,
-                    CbteFch = CAEDetRequest.CbteFch,
-                    ImpTotal = CAEDetRequest.ImpTotal,
-                    ImpTotConc = CAEDetRequest.ImpTotConc,
-                    ImpNeto = CAEDetRequest.ImpNeto,
-                    ImpOpEx = CAEDetRequest.ImpOpEx,
-                    ImpIVA = Iva,
-                    MonCotiz = CAEDetRequest.MonCotiz,
-                    MonCotizSpecified = true,
-                    MonId = CAEDetRequest.MonId,
-                    //CanMisMonExt = CAEDetRequest.CantidadMismaMonedaExt,                    
-                    CondicionIVAReceptorId = CAEDetRequest.CondicionIvaReceptor,
-
-                };
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 2 ");
-                if (CAEDetRequest.Concepto == 2 || CAEDetRequest.Concepto == 3)
-                {
-
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 2.1 Concepto {CAEDetRequest.Concepto} {CAEDetRequest.DocTipo} {CAEDetRequest.DocNro}");
-                    detalleProd.FchServDesde = CAEDetRequest.FchServDesde;
-                    detalleProd.FchServHasta = CAEDetRequest.FchServHasta;
-                }
-                if (CAEDetRequest.FchVtoPago.Length > 0) detalleProd.FchVtoPago = CAEDetRequest.FchVtoPago;
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 3 {CAEDetRequest.Iva?.Count()} ");
-                if (CAEDetRequest.Iva != null && CAEDetRequest.Iva.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 3.1 {CAEDetRequest.Iva?.Count()} ");
-                    detalleProd.ImpIVA = CAEDetRequest.Iva?.Sum(t => t.Importe) ?? 0;
-                    detalleProd.Iva = CAEDetRequest.Iva.Select(alicIva => (Wsfev1Homo.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 4 {CAEDetRequest.Tributos?.Count()} ");
-                if (CAEDetRequest.Tributos != null && CAEDetRequest.Tributos.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 4.1 {CAEDetRequest.Tributos?.Count()} ");
-                    detalleProd.ImpTrib = CAEDetRequest.Tributos?.Sum(t => t.Importe) ?? 0;
-                    detalleProd.Tributos = CAEDetRequest.Tributos.Select(tributo => (Wsfev1Homo.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 5 {CAEDetRequest.ComprobantesAsociados?.Count()} ");
-                if (CAEDetRequest.ComprobantesAsociados != null && CAEDetRequest.ComprobantesAsociados.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 5.1 {CAEDetRequest.ComprobantesAsociados?.Count()}");
-                    detalleProd.CbtesAsoc = CAEDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1Homo.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
-                }
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 6 Opcionales {CAEDetRequest.Opcionales?.Count()} ");
-                if (CAEDetRequest.Opcionales != null && CAEDetRequest.Opcionales.Count() > 0)
-                {
-                    if (HabilitaLog) HelpersLogger.Escribir($"Linea 6.1 Opcionales {CAEDetRequest.Opcionales?.Count()} ");
-                    detalleProd.Opcionales = CAEDetRequest.Opcionales.Select(opcional => (Wsfev1Homo.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
-                }
-
-
-                var solicitudProd = new Wsfev1Homo.FECAERequest
-                {
-                    FeCabReq = cabeceraProd, //CAbecera
-                    FeDetReq = new Wsfev1Homo.FECAEDetRequest[] { detalleProd } //detalle
-                };
-                TraceBack = HelpersGlobal.SerializeObjectAXml(solicitudProd);
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 7 {TraceBack}");
-
-                //invocar FECAESolicitar del wsfev1 
-                objWSFEV1 = new Wsfev1Homo.Service();
-                respuesta = ((dynamic)objWSFEV1).FECAESolicitar(authProd, solicitudProd);
-
-                TraceBack = HelpersGlobal.SerializeObjectAXml(respuesta);
-                if (HabilitaLog) HelpersLogger.Escribir($"Linea 8 {TraceBack}");
-            }
-            catch (Exception ex)
-            {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception:{ex.Message} {TraceBack} {ex.StackTrace}");
-                SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
-                respuesta = null;
-            }
-        }
-
-        //private void RegInformativoARCA_HOMO(int nPtoVta, int nTipCom, string sCAE, object objWSFEV1, out object respuesta)
-        //{
-        //    try
-        //    {
-        //        //TraceBack = "Linea 1";
-        //        //var authProd = new Wsfev1Homo.FEAuthRequest
-        //        //{
-        //        //    Token = TkValido.Token,
-        //        //    Sign = TkValido.Sign,
-        //        //    Cuit = Convert.ToInt64(Cuit)
-        //        //};
-
-        //        //Wsfev1Homo.FECAEACabRequest cabeceraProd = new Wsfev1Homo.FECAEACabRequest
-        //        //{
-        //        //    CantReg = 1,
-        //        //    PtoVta = nPtoVta,
-        //        //    CbteTipo = nTipCom
-        //        //};
-        //        //TraceBack = "Linea 2";
-        //        ////Convertir CAEADetRequest a FECAEDetRequest
-        //        //if (CAEADetReq == null)
-        //        //{
-        //        //    CAEADetReq = CAEDetRequest.CopyToDerived<CAEDetRequest, CAEADetRequest>();
-        //        //}
-        //        //CAEADetReq.CAEA = sCAE;
-
-        //        //Wsfev1Homo.FECAEADetRequest detalleProd = new Wsfev1Homo.FECAEADetRequest
-        //        //{
-        //        //    Concepto = CAEADetReq.Concepto,
-        //        //    DocTipo = CAEADetReq.DocTipo,
-        //        //    DocNro = CAEADetReq.DocNro,
-        //        //    CbteDesde = CAEADetReq.CbteDesde,
-        //        //    CbteHasta = CAEADetReq.CbteHasta,
-        //        //    CbteFch = CAEADetReq.CbteFch,
-        //        //    ImpTotal = CAEADetReq.ImpTotal,
-        //        //    ImpTotConc = CAEADetReq.ImpTotConc,
-        //        //    ImpNeto = CAEADetReq.ImpNeto,
-        //        //    ImpOpEx = CAEADetReq.ImpOpEx,
-        //        //    ImpIVA = Iva,
-        //        //    MonCotiz = CAEADetReq.MonCotiz,
-        //        //    MonCotizSpecified = true,
-        //        //    MonId = CAEADetReq.MonId,
-        //        //    //CanMisMonExt = CAEDetRequest.CantidadMismaMonedaExt,                    
-        //        //    CondicionIVAReceptorId = CAEADetReq.CondicionIvaReceptor,
-        //        //    CAEA = CAEADetReq.CAEA,
-        //        //    CbteFchHsGen = CAEADetReq.CbteFchHsGen
-        //        //};
-        //        //if (CAEADetReq.Concepto == 2 || CAEADetReq.Concepto == 3)
-        //        //{
-
-        //        //    TraceBack = "Linea 2.1";
-        //        //    detalleProd.FchServDesde = CAEADetReq.FchServDesde;
-        //        //    detalleProd.FchServHasta = CAEADetReq.FchServHasta;
-        //        //}
-        //        //if (CAEADetReq.FchVtoPago.Length > 0) detalleProd.FchVtoPago = CAEADetReq.FchVtoPago;
-
-        //        //TraceBack = "Linea 3";
-        //        //if (Iva > 0)
-        //        //{
-        //        //    TraceBack = "Linea 3.1";
-        //        //    detalleProd.Iva = CAEADetReq.Iva.Select(alicIva => (Wsfev1Homo.AlicIva)HelpersArca.ConvertAlicIva(alicIva, Produccion)).ToArray();
-        //        //}
-        //        //TraceBack = "Linea 4";
-        //        //if (CAEADetReq.ImpTrib > 0)
-        //        //{
-        //        //    TraceBack = "Linea 4.1";
-        //        //    detalleProd.ImpTrib = CAEADetReq.ImpTrib;
-        //        //    detalleProd.Tributos = CAEADetReq.Tributos.Select(tributo => (Wsfev1Homo.Tributo)HelpersArca.ConvertirTributos(tributo, Produccion)).ToArray();
-        //        //}
-        //        //TraceBack = "Linea 5";
-        //        //if (CAEADetReq.ComprobantesAsociados != null && CAEADetReq.ComprobantesAsociados.Count() > 0)
-        //        //{
-        //        //    TraceBack = "Linea 5.1";
-        //        //    detalleProd.CbtesAsoc = CAEADetReq.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1Homo.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, Produccion)).ToArray();
-        //        //}
-        //        //TraceBack = "Linea 6";
-
-        //        //if (CAEADetReq.Opcionales != null && CAEADetReq.Opcionales.Count() > 0)
-        //        //{
-        //        //    TraceBack = "Linea 6.1";
-        //        //    detalleProd.Opcionales = CAEADetReq.Opcionales.Select(opcional => (Wsfev1Homo.Opcional)HelpersArca.ConvertirOpcionales(opcional, Produccion)).ToArray();
-        //        //}
-
-
-        //        //TraceBack = "Linea 7";
-        //        //var solicitudProd = new Wsfev1Homo.FECAEARequest
-        //        //{
-        //        //    FeCabReq = cabeceraProd, //CAbecera
-        //        //    FeDetReq = new Wsfev1Homo.FECAEADetRequest[] { detalleProd } //detalle
-        //        //};
-        //        //TraceBack = HelpersGlobal.SerializeObjectAXml(solicitudProd);
-
-        //        ////invocar FECAESolicitar del wsfev1 
-        //        //objWSFEV1 = new Wsfev1Homo.Service();
-        //        //respuesta = ((dynamic)objWSFEV1).FECAEARegInformativo(authProd, solicitudProd);
-        //        return null;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        TraceBack = ex.StackTrace;
-        //        SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
-        //        respuesta = null;
-        //    }
-        //}
-        #endregion
         #region[Metodos para Setear y Devolver valores ]
-
 
         private void SetError(GlobalSettings.Errors codigoError, string descError, string traceBack)
         {
@@ -1156,7 +816,6 @@ namespace InnercorArca.V1
 
             TraceBack = traceBack;
         }
-
         public string GetAppServerStatus()
         {
             return AppServerStatus_;
@@ -1169,12 +828,10 @@ namespace InnercorArca.V1
         {
             return AuthServerStatus_;
         }
-
         public int GetUltimoNumero()
         {
             return UltimoNumero;
         }
-
         public string GetFechaDesde()
         {
             return FechaDesde;
@@ -1204,6 +861,10 @@ namespace InnercorArca.V1
             return Result;
         }
         public string GetReprocesar()
+        {
+            return Reproc;
+        }
+        public string GetQR()
         {
             return Reproc;
         }
@@ -1255,7 +916,7 @@ namespace InnercorArca.V1
                     ImpNeto = nImpNet,
                     ImpOpEx = nImpOpc,
                     ImpTrib = 0.00,
-                    ImpIVA = nImpCon,
+                    ImpIVA = 0.00,
                     MonId = cMoneda,
                     MonCotiz = nCotiza,
                     CantidadMismaMonedaExt = "N",
@@ -1274,7 +935,6 @@ namespace InnercorArca.V1
             }
 
         }
-
         public void AgregaIVA(int codigoAlicuota, double importeBase, double importeIVA)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaIVA ");
@@ -1317,7 +977,6 @@ namespace InnercorArca.V1
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad AliccIvas {CAEDetRequest.Iva.Count()} : {codigoAlicuota} - {importeBase} - {importeIVA} .. {ex.StackTrace}");
             }
         }
-
         public void AgregaOpcional(string codigo, string valor)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaOpcional {codigo} - {valor}");
@@ -1394,7 +1053,6 @@ namespace InnercorArca.V1
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad Tributos {CAEDetRequest.Tributos.Count()} : {codimp} - {descri} - {impbase} - {alicuo} - {import} .. {ex.StackTrace}");
             }
         }
-
         public void AgregaCompAsoc(int nTipCmp, int nPtoVta, int nNroCmp, Int64 nNroCuit, string dFchCmp)
         {
             try

@@ -1,0 +1,7 @@
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\bin\Release\Verifica_Crypto.exe.config
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\bin\Release\Verifica_Crypto.exe
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\bin\Release\Verifica_Crypto.pdb
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\obj\Release\Verifica_Crypto.csproj.AssemblyReference.cache
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\obj\Release\Verifica_Crypto.csproj.CoreCompileInputs.cache
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\obj\Release\Verifica_Crypto.exe
+K:\Trabajo.Innercor\InnercorArca\Verifica_Crypto\obj\Release\Verifica_Crypto.pdb

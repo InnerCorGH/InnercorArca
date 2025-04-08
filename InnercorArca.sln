@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InnercorArca.V1", "Innercor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_InnercorArca", "Console\Console_InnercorArca.csproj", "{041BA873-6BA0-454E-B4C9-239A71D14787}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Verifica_Crypto", "Verifica_Crypto\Verifica_Crypto.csproj", "{A5F0E608-19B9-43F2-A464-34E6D8576A82}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{041BA873-6BA0-454E-B4C9-239A71D14787}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{041BA873-6BA0-454E-B4C9-239A71D14787}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{041BA873-6BA0-454E-B4C9-239A71D14787}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5F0E608-19B9-43F2-A464-34E6D8576A82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5F0E608-19B9-43F2-A464-34E6D8576A82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5F0E608-19B9-43F2-A464-34E6D8576A82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5F0E608-19B9-43F2-A464-34E6D8576A82}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

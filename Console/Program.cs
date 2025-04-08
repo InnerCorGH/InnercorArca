@@ -13,7 +13,7 @@ namespace Console_InnercorDLL
             {
                 
                 // Print the DLL version
-                Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionInfo.GetVersionDLL()}");
+                Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionDLLInfo.GetVersionDLL()}");
 
                 //TestARCA_CAEA();
                // TestARCA_wsfev1();

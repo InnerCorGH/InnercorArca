@@ -70,9 +70,7 @@
     <Compile Include="Helpers\HelpersGlobal.cs" />
     <Compile Include="Helpers\HelpersCert.cs" />
     <Compile Include="Helpers\InnercorArcaModels.cs" />
-    <Compile Include="K:/Trabajo.Innercor/InnercorArca/InnercorArca/\VersionInfo.cs">
-      <Link>VersionInfo.cs</Link>
-    </Compile>
+    <Compile Include="VersionInfo.cs"/> 
     <Compile Include="ModelsCOM\ContribuyenteCOM.cs" />
     <Compile Include="Procesos\ArcaCAE.cs" />
     <Compile Include="Procesos\ArcaCAEHomo.cs" />
@@ -83,7 +81,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="QR.cs" />
+    <Compile Include="QR.cs" /> 
     <Compile Include="Web References\Aws\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

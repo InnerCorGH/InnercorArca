@@ -70,10 +70,9 @@
     <Compile Include="Helpers\HelpersGlobal.cs" />
     <Compile Include="Helpers\HelpersCert.cs" />
     <Compile Include="Helpers\InnercorArcaModels.cs" />
-    <Compile Include="VersionInfo.cs"/> 
-    <Compile Include="ModelsCOM\ContribuyenteCOM.cs" />
     <Compile Include="Procesos\ArcaCAE.cs" />
-    <Compile Include="Procesos\ArcaCAEHomo.cs" />
+    <Compile Include="VersionInfo.cs" />
+    <Compile Include="ModelsCOM\ContribuyenteCOM.cs" />
     <Compile Include="Procesos\ArcaCAEA.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -81,7 +80,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="QR.cs" /> 
+    <Compile Include="QR.cs" />
     <Compile Include="Web References\Aws\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -270,6 +269,9 @@
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\Wsfev1\ConceptoTipoResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\Wsfev1\CondicionIvaReceptorResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
     <None Include="Web References\Wsfev1\DocTipoResponse.datasource">

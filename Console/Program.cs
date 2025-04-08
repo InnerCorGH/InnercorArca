@@ -13,12 +13,12 @@ namespace Console_InnercorDLL
             {
                 
                 // Print the DLL version
-                Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionDLLInfo.GetVersionDLL()}");
+                Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionInfo.GetVersionDLL()}");
 
                 //TestARCA_CAEA();
-               // TestARCA_wsfev1();
+                TestARCA_wsfev1();
 
-                TestARCA_wsPadron();
+                //TestARCA_wsPadron();
             }
             catch (Exception ex)
             {
@@ -209,7 +209,7 @@ namespace Console_InnercorDLL
 
             //Client.Reset();
             // Recuperar el último comprobante autorizado
-            int PtoVta = 90; 
+            int PtoVta = 99; 
             int TipoCbte = 6; // Factura a
             int CbteNro = 0;
 

@@ -201,6 +201,7 @@ namespace InnercorArca.V1
                             TkValido = HelpersCache.RecuperarTokenSign(cache);
 
                             HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
+
                             return true;
                         }
                     }
@@ -333,72 +334,6 @@ namespace InnercorArca.V1
         }
 
 
-        //public bool Dummy(ref string cAppServerStatus, ref string cDbServerStatus, ref string cAuthServerStatus)
-        //{
-        //    if (HabilitaLog) HelpersLogger.Escribir("Inicio Dummy");
-        //    try
-        //    {
-        //        if (Produccion)
-        //        {
-        //            if (feAuthRequest == null)
-        //                HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
-
-        //            var wsfe = new Wsfev1.Service(); // o como se llame tu instancia del servicio
-        //            Wsfev1.DummyResponse objDummy = wsfe.FEDummy(); // Este método hace la llamada real al WS de AFIP
-
-        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummy.GetType()}");
-
-        //            if (objDummy == null)
-        //            {
-        //                if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
-        //                SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
-        //                return false;
-        //            }
-
-        //            cAppServerStatus = objDummy.AppServer ?? "OK";
-        //            cAuthServerStatus = objDummy.AuthServer ?? "OK";
-        //            cDbServerStatus = objDummy.DbServer ?? "OK";
-        //        }
-        //        else
-        //        {
-        //            if (feAuthRequest == null)
-        //                HelpersArca.SeteaAuthRequest(Produccion, ref feAuthRequest, TkValido, Convert.ToInt64(Cuit));
-        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {feAuthRequest.GetType()}");
-
-        //            var wsfe = new Wsfev1Homo.Service(); // o como se llame tu instancia del servicio
-        //            Wsfev1Homo.DummyResponse objDummyHomo = wsfe.FEDummy(); // Este método hace la llamada real al WS de AFIP
-
-        //            if (HabilitaLog) HelpersLogger.Escribir($"Dummy {objDummyHomo.GetType()}");
-
-        //            if (objDummyHomo == null)
-        //            {
-        //                if (HabilitaLog) HelpersLogger.Escribir($"Dummy Error al crear objeto Dummy");
-        //                SetError(GlobalSettings.Errors.EXCEPTION, "Error al crear objeto Dummy.", "Dummy 1");
-        //                return false;
-        //            }
-
-        //            cAppServerStatus = objDummyHomo.AppServer ?? "OK";
-        //            cAuthServerStatus = objDummyHomo.AuthServer ?? "OK";
-        //            cDbServerStatus = objDummyHomo.DbServer ?? "OK";
-        //        }
-
-        //        AppServerStatus_ = cAppServerStatus;
-        //        AuthServerStatus_ = cAuthServerStatus;
-        //        DbServerStatus_ = cDbServerStatus;
-
-        //        if (HabilitaLog) HelpersLogger.Escribir($"Dummy {cAppServerStatus} {cAuthServerStatus} {cDbServerStatus}");
-
-        //        return cAppServerStatus == "OK" && cAuthServerStatus == "OK" && cDbServerStatus == "OK";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
-        //        SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
-        //        return false;
-        //    }
-        //}
-
         public void Reset()
         {
             try
@@ -426,7 +361,7 @@ namespace InnercorArca.V1
         }
         public string GetVersion()
         {
-            return $"1.2.4"; // Cambia esto según tu versión actual
+            return $"1.2.6"; // Cambia esto según tu versión actual
         }
         #endregion
 
@@ -606,14 +541,16 @@ namespace InnercorArca.V1
 
                 //llama a ARCA FECAESOlicitar y manda el objeto creado
                 //si devuelve error, setea el error y devuelve false
-                dynamic respuesta;
+                //dynamic respuesta;
                 int errCode = 0;
                 string errDesc = "";
 
-                if (Produccion)
-                    ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
-                else
-                    ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
+                //if (Produccion)
+                //    ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
+                //else
+                //    ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
+
+                ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, Produccion, out dynamic respuesta);
 
                 if (HabilitaLog) HelpersLogger.Escribir("POS Autorización ARCA");
                 // Verificar la respuesta
@@ -746,16 +683,11 @@ namespace InnercorArca.V1
 
                 //llama a ARCA FECAESOlicitar y manda el objeto creado
                 //si devuelve error, setea el error y devuelve false
-                dynamic respuesta;
+                //dynamic respuesta;
                 int errCode = 0;
-                string errDesc = "";
-
-                //if (Produccion)
-                ArcaCAE.RegInformativoARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, out respuesta);
-                //RegInformativoARCA(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
-                //else
-                //    RegInformativoARCA_HOMO(nPtoVta, nTipCom, sCAE, objWSFEV1, out respuesta);
-
+                string errDesc = ""; 
+                ArcaCAE.RegInformativoARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, Produccion, out dynamic respuesta);
+                
                 // Verificar la respuesta
                 string cae = ""; string vtoCae = ""; string result = ""; string reproc = ""; string xmlResponse = ""; string observ = ""; string eventDesc = "";
                 HelpersArca.ProcesarRespuestaFactura(HabilitaLog, respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result,
@@ -918,7 +850,7 @@ namespace InnercorArca.V1
                     ImpTrib = 0.00,
                     ImpIVA = 0.00,
                     MonId = cMoneda,
-                    MonCotiz = nCotiza,
+                    MonCotiz = nCotiza==0?1:nCotiza,
                     CantidadMismaMonedaExt = "N",
                     FchServDesde = cSerDes, //.ToString("yyyyMMdd"),
                     FchServHasta = cSerHas, //.ToString("yyyyMMdd"),

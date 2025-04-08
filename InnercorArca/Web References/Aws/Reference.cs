@@ -1284,9 +1284,13 @@ namespace InnercorArca.V1.Aws {
         
         private string descripcionImpuestoField;
         
+        private string estadoImpuestoField;
+        
         private int idImpuestoField;
         
         private bool idImpuestoFieldSpecified;
+        
+        private string motivoField;
         
         private int periodoField;
         
@@ -1300,6 +1304,17 @@ namespace InnercorArca.V1.Aws {
             }
             set {
                 this.descripcionImpuestoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public string estadoImpuesto {
+            get {
+                return this.estadoImpuestoField;
+            }
+            set {
+                this.estadoImpuestoField = value;
             }
         }
         
@@ -1322,6 +1337,17 @@ namespace InnercorArca.V1.Aws {
             }
             set {
                 this.idImpuestoFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public string motivo {
+            get {
+                return this.motivoField;
+            }
+            set {
+                this.motivoField = value;
             }
         }
         

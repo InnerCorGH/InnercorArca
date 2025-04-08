@@ -1,4 +1,5 @@
 ﻿using InnercorArca.V1.ModelsCOM;
+using InnercorArca.V1.Procesos;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -21,20 +22,21 @@ namespace InnercorArca.V1.Helpers
         {
             try
             {
-                if (Produccion)
-                {
-                    if (feAuthRequest == null)
-                    {
-                        feAuthRequest = Procesos.ArcaCAE.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
-                    }
-                }
-                else
-                {
-                    if (feAuthRequest == null)
-                    {
-                        feAuthRequest = Procesos.ArcaCAEHOMO.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
-                    }
-                }
+                feAuthRequest = ArcaCAE.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit, Produccion);
+                //if (Produccion)
+                //{
+                //    if (feAuthRequest == null)
+                //    {
+                //        feAuthRequest = Procesos.ArcaCAE.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
+                //    }
+                //}
+                //else
+                //{
+                //    if (feAuthRequest == null)
+                //    {
+                //        feAuthRequest = Procesos.ArcaCAEHOMO.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
+                //    }
+                //}
             }
             catch (Exception ex)
             {

@@ -16,9 +16,9 @@ namespace Console_InnercorDLL
                 Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionInfo.GetVersionDLL()}");
 
                 //TestARCA_CAEA();
-                TestARCA_wsfev1();
+               // TestARCA_wsfev1();
 
-                //TestARCA_wsPadron();
+                TestARCA_wsPadron();
             }
             catch (Exception ex)
             {

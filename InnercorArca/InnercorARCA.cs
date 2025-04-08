@@ -586,9 +586,8 @@ namespace InnercorArca.V1
             }
         }
 
-
-
         #endregion
+
         #region [Métodos Autorizacion y Consulta CAE ]
         public bool Autorizar(int nPtoVta, int nTipCom)
         {// llama al FECAESOlcicitar 
@@ -936,7 +935,6 @@ namespace InnercorArca.V1
             }
 
         }
-
         public void AgregaIVA(int codigoAlicuota, double importeBase, double importeIVA)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaIVA ");
@@ -979,7 +977,6 @@ namespace InnercorArca.V1
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad AliccIvas {CAEDetRequest.Iva.Count()} : {codigoAlicuota} - {importeBase} - {importeIVA} .. {ex.StackTrace}");
             }
         }
-
         public void AgregaOpcional(string codigo, string valor)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaOpcional {codigo} - {valor}");
@@ -1056,7 +1053,6 @@ namespace InnercorArca.V1
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad Tributos {CAEDetRequest.Tributos.Count()} : {codimp} - {descri} - {impbase} - {alicuo} - {import} .. {ex.StackTrace}");
             }
         }
-
         public void AgregaCompAsoc(int nTipCmp, int nPtoVta, int nNroCmp, Int64 nNroCuit, string dFchCmp)
         {
             try

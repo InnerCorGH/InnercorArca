@@ -361,7 +361,7 @@ namespace InnercorArca.V1
         }
         public string GetVersion()
         {
-            return $"1.2.6"; // Cambia esto según tu versión actual
+            return $"1.2.7"; // Cambia esto según tu versión actual
         }
         #endregion
 
@@ -551,6 +551,7 @@ namespace InnercorArca.V1
                 //    ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
 
                 ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, Produccion, out dynamic respuesta);
+                XmlResponse = HelpersGlobal.SerializeObjectAXml(respuesta);
 
                 if (HabilitaLog) HelpersLogger.Escribir("POS Autorización ARCA");
                 // Verificar la respuesta
@@ -565,7 +566,7 @@ namespace InnercorArca.V1
                 VencimientoCAE = vtoCae;
                 Observaciones = observ;
                 TraceBack = $"Autorizar {TraceBack}";
-                XmlResponse = xmlResponse;
+                //XmlResponse = xmlResponse;
                 ErrorCode = errCode;
                 ErrorDesc = errDesc;
                 Excepcion = eventDesc;

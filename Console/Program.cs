@@ -15,10 +15,10 @@ namespace Console_InnercorDLL
                 // Print the DLL version
                 Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionInfo.GetVersionDLL()}");
 
-                //TestARCA_CAEA();
-                TestARCA_wsfev1();
+              //  TestARCA_CAEA();
+               // TestARCA_wsfev1();
 
-                //TestARCA_wsPadron();
+                TestARCA_wsPadron();
             }
             catch (Exception ex)
             {
@@ -41,6 +41,8 @@ namespace Console_InnercorDLL
 
             var Client = new InnercorArca.V1.wsPadron()
             {
+                //Cuit = "20256571405",
+                //ModoProdccion=false
                 Cuit = "33710525809",
                 ModoProduccion = true
             };
@@ -60,9 +62,9 @@ namespace Console_InnercorDLL
 
             object oCont = null;
             //Client.Consultar("25657140", ref oCont); //Monotirbuto 
-            //Client.Consultar("33710525809", ref oCont); // Resp Inscripto
+            Client.Consultar("33710525809", ref oCont); // Resp Inscripto
             //Client.Consultar("44433967", ref oCont);//Cons final
-            Client.Consultar("27046394106", ref oCont); // Cons final
+            //Client.Consultar("27046394106", ref oCont); // Cons final
                                                         //Client.Consultar("59302332", ref oCont); //COnsumidor FInal
                                                         //            Client.Consultar("30669387128", ref oCont);//Exento
                                                         //Client.Consultar("47711304", ref oCont);//Exento
@@ -103,12 +105,15 @@ namespace Console_InnercorDLL
         {
 
             Console.WriteLine("*********ARCA WSFEV1 CAEA***********");
-            string pathCrt = @"K:\Trabajo.Innercor\DLL vs\MUSICALISIMOSA_20240926.crt";
-            string pathKey = @"K:\Trabajo.Innercor\DLL vs\MUSICALISIMOSA_20240926.key";
+
+            string pathCrt = @"K:\Trabajo.Innercor\DLL vs\AndresCastigliano_20241226_homo.crt";
+            string pathKey = @"K:\Trabajo.Innercor\DLL vs\AndresCastigliano_20241226_homo.key";
+            //string pathCrt = @"K:\Trabajo.Innercor\DLL vs\MUSICALISIMOSA_20240926.crt";
+            //string pathKey = @"K:\Trabajo.Innercor\DLL vs\MUSICALISIMOSA_20240926.key";
             string urlWSAA = "https://wsaa.afip.gov.ar/ws/services/LoginCms"; // O producción
             var Client = new InnercorArca.V1.wsfev1()
             {
-                Cuit = "30586954853",
+                Cuit ="20256571405",// "30586954853",
                 HabilitaLog = true,
             };
             bool isAuthenticated = Client.Login(pathCrt, pathKey, urlWSAA);
@@ -210,7 +215,7 @@ namespace Console_InnercorDLL
             //Client.Reset();
             // Recuperar el último comprobante autorizado
             int PtoVta = 99; 
-            int TipoCbte = 6; // Factura a
+            int TipoCbte = 6; // Factura a -1 
             int CbteNro = 0;
 
             Client.RecuperaLastCMP(PtoVta, TipoCbte, ref CbteNro);

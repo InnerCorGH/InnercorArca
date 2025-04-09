@@ -117,7 +117,6 @@ namespace InnercorArca.V1
                 // Crear el cliente del servicio - revisar en el archivo .cache si el token es válido y no expiró
                 if (File.Exists(PathCache))
                 {
-                    //string cache = HelpersArca.LeerCache(PathCache, service);
                     string cache = HelpersCache.LeerBloqueServicio(PathCache, service);
 
                     if (!string.IsNullOrEmpty(cache))
@@ -224,28 +223,40 @@ namespace InnercorArca.V1
         #endregion
 
         #region [Métodos Internos ] 
-        private bool TryGetPersona(string cuit, ref dynamic response )
+        private bool TryGetPersona(string sCuit, ref dynamic response )
         {
             try
             {
 
+                string errorDesc = "";
 
-
-                if (Produccion)
+                try
                 {
-                    var client = new Aws.PersonaServiceA5();
-                    response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
+                    if (Produccion)
+                    {
+                        var client = new Aws.PersonaServiceA5();
+                        response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(sCuit));
+                        //response = client.getPersona_v2(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(sCuit));
+                    }
+                    else
+                    {
+                        var client = new Awshomo.PersonaServiceA5();
+                        response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(sCuit));
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    //var client = new Awshomo.PersonaServiceA5();
-                    //response = client.getPersona(TkValido.Token, TkValido.Sign, Convert.ToInt64(Cuit), Convert.ToInt64(cuit));
+
+                    errorDesc  = ex.Message;
+
+                    SetError(GlobalSettings.Errors.GET_ERROR, errorDesc, "Errores Respuesta GetPersona ");
+                    return false;
+                   
                 }
 
 
                 if (response.errorConstancia != null || response.errorMonotributo != null || response.errorRegimenGeneral != null)
                 {
-                    string errorDesc = "";
                     if (response.errorConstancia != null)
                     {
                         if (response.errorConstancia.apellido.Length > 0)
@@ -301,6 +312,7 @@ namespace InnercorArca.V1
         {
             try
             {
+                if (Contribuyente == null) return null;
                 if (Contribuyente.DomicilioFiscal != null) return Contribuyente.DomicilioFiscal;
                 return null;
             }
@@ -317,7 +329,7 @@ namespace InnercorArca.V1
 
         public string GetVersion()
         {
-            return "1.1.3";
+            return "1.1.4";
         }
         #region[Metodos Seteo]
         private void SetError(GlobalSettings.Errors codigoError, string descError, string traceBack)

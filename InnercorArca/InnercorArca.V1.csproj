@@ -81,6 +81,11 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="QR.cs" />
+    <Compile Include="Web References\Awshomo\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Web References\Aws\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -125,6 +130,17 @@
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>InnercorArca_V1_Aws_PersonaServiceA5</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5%3fwsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\Awshomo\</RelPath>
+      <UpdateFromURL>https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5%3fwsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>InnercorArca_V1_Awshomo_PersonaServiceA5</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="https://servicios1.afip.gov.ar/wsfev1/service.asmx">
       <UrlBehavior>Dynamic</UrlBehavior>
@@ -177,6 +193,20 @@
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\Awshomo\dummyReturn.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\Awshomo\personaListReturn.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\Awshomo\personaReturn.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\Awshomo\PersonaServiceA5.wsdl" />
+    <None Include="Web References\Awshomo\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
     <None Include="Web References\Aws\dummyReturn.datasource">
       <DependentUpon>Reference.map</DependentUpon>

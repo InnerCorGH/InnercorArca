@@ -72,5 +72,15 @@ namespace InnercorArca.V1.Properties {
                 return ((string)(this["InnercorArca_V1_Aws_PersonaServiceA5"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5")]
+        public string InnercorArca_V1_Awshomo_PersonaServiceA5 {
+            get {
+                return ((string)(this["InnercorArca_V1_Awshomo_PersonaServiceA5"]));
+            }
+        }
     }
 }

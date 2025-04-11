@@ -11,14 +11,14 @@ namespace Console_InnercorDLL
         {
             try
             {
-                
+
                 // Print the DLL version
                 Console.WriteLine($"DLL Version: {InnercorArca.V1.VersionInfo.GetVersionDLL()}");
 
-              //  TestARCA_CAEA();
-               // TestARCA_wsfev1();
+                //  TestARCA_CAEA();
+                TestARCA_wsfev1();
 
-                TestARCA_wsPadron();
+                //TestARCA_wsPadron();
             }
             catch (Exception ex)
             {
@@ -28,7 +28,7 @@ namespace Console_InnercorDLL
             return Task.CompletedTask;
         }
 
-        
+
 
         static void TestARCA_wsPadron()
         {
@@ -63,8 +63,8 @@ namespace Console_InnercorDLL
             object oCont = null;
             //Client.Consultar("25657140", ref oCont); //Monotirbuto 
             Client.Consultar("33710525809", ref oCont); // Resp Inscripto
-            //Client.Consultar("44433967", ref oCont);//Cons final
-            //Client.Consultar("27046394106", ref oCont); // Cons final
+                                                        //Client.Consultar("44433967", ref oCont);//Cons final
+                                                        //Client.Consultar("27046394106", ref oCont); // Cons final
                                                         //Client.Consultar("59302332", ref oCont); //COnsumidor FInal
                                                         //            Client.Consultar("30669387128", ref oCont);//Exento
                                                         //Client.Consultar("47711304", ref oCont);//Exento
@@ -113,7 +113,7 @@ namespace Console_InnercorDLL
             string urlWSAA = "https://wsaa.afip.gov.ar/ws/services/LoginCms"; // O producción
             var Client = new InnercorArca.V1.wsfev1()
             {
-                Cuit ="20256571405",// "30586954853",
+                Cuit = "20256571405",// "30586954853",
                 HabilitaLog = true,
             };
             bool isAuthenticated = Client.Login(pathCrt, pathKey, urlWSAA);
@@ -199,8 +199,8 @@ namespace Console_InnercorDLL
             else
             {
                 Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
-            }
-                    ;
+                return;
+            };
 
             // Implementación real de la llamada al servicio
             string sServerStatus = "";
@@ -214,7 +214,7 @@ namespace Console_InnercorDLL
 
             //Client.Reset();
             // Recuperar el último comprobante autorizado
-            int PtoVta = 99; 
+            int PtoVta = 99;
             int TipoCbte = 6; // Factura a -1 
             int CbteNro = 0;
 
@@ -241,11 +241,17 @@ namespace Console_InnercorDLL
             //if (Client.ErrorCode != 0) Console.WriteLine($"Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             //invocar agregafactura  
-            double ImpTotal = 939169;
-            Client.AgregaFactura(1, 96, 23198937, CbteNro + 1, CbteNro + 1, "20250407", ImpTotal, 0, 776172.73, 0, "", "", "", "PES", 1, 1);
+
+            double ImpNeto = 1421958.51;
+            double ImpIva = ImpNeto * 0.21; // 555.200;
+            double ImpTotal =1713170; // 31704.880;
+            Client.AgregaFactura(1, 80, 30545810901 , CbteNro + 1, CbteNro + 1, "20250411", ImpTotal, 0, ImpNeto, 0, "", "", "", "PES", 1, 1);
             if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Factura Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
-            Client.AgregaIVA(5, 776172.73, 162996.27);
+            Client.AgregaIVA(5, 1351484.28, 283811.72);
+            if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva 5 Error: {Client.ErrorCode} - {Client.ErrorDesc}");
+
+            Client.AgregaIVA(4, 70474.21, 7399.79);
             if (Client.ErrorCode != 0) Console.WriteLine($"Agrega Iva Error: {Client.ErrorCode} - {Client.ErrorDesc}");
 
             //////Client.AgregaOpcional("20101", "0200408601000000192133");

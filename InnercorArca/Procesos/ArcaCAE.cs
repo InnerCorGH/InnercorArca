@@ -7,6 +7,9 @@ namespace InnercorArca.V1.Procesos
 {
     public static class ArcaCAE
     {
+        /// <summary>        
+                //llama a ARCA FECAESOlicitar y manda el objeto creado 
+        /// </summary>
         public static void AutorizarARCA(bool habilitaLog, string cuit,
             CAEDetRequest caeDetRequest, double iva, CacheResult tkValido,
             int nPtoVta, int nTipCom, bool isProduction, out object respuesta)
@@ -56,12 +59,12 @@ namespace InnercorArca.V1.Procesos
                 detalle.CbteDesde = caeDetRequest.CbteDesde;
                 detalle.CbteHasta = caeDetRequest.CbteHasta;
                 detalle.CbteFch = caeDetRequest.CbteFch;
-                detalle.ImpTotal = caeDetRequest.ImpTotal;
-                detalle.ImpTotConc = caeDetRequest.ImpTotConc;
-                detalle.ImpNeto = caeDetRequest.ImpNeto;
-                detalle.ImpOpEx = caeDetRequest.ImpOpEx;
-                detalle.ImpIVA = iva;
-                detalle.MonCotiz = caeDetRequest.MonCotiz;
+                detalle.ImpTotal = HelpersGlobal.GetDecimales(caeDetRequest.ImpTotal);
+                detalle.ImpTotConc = HelpersGlobal.GetDecimales(caeDetRequest.ImpTotConc);
+                detalle.ImpNeto = HelpersGlobal.GetDecimales(caeDetRequest.ImpNeto);
+                detalle.ImpOpEx = HelpersGlobal.GetDecimales(caeDetRequest.ImpOpEx);
+                detalle.ImpIVA = HelpersGlobal.GetDecimales(iva);
+                detalle.MonCotiz = HelpersGlobal.GetDecimales(caeDetRequest.MonCotiz);
                 detalle.MonCotizSpecified = true;
                 detalle.MonId = caeDetRequest.MonId;
                 detalle.CondicionIVAReceptorId = caeDetRequest.CondicionIvaReceptor;
@@ -83,7 +86,7 @@ namespace InnercorArca.V1.Procesos
                 if (caeDetRequest.Iva?.Length > 0)
                 {
                     if (habilitaLog) HelpersLogger.Escribir("Linea 3.1 " + caeDetRequest.Iva?.Length);
-                    detalle.ImpIVA = caeDetRequest.Iva.Sum(t => t.Importe);
+                    detalle.ImpIVA = HelpersGlobal.GetDecimales(caeDetRequest.Iva.Sum(t => t.Importe));
                     if (isProduction)
                         detalle.Iva = caeDetRequest.Iva.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, true)).ToArray();
                     else
@@ -94,7 +97,7 @@ namespace InnercorArca.V1.Procesos
                 if (caeDetRequest.Tributos?.Length > 0)
                 {
                     if (habilitaLog) HelpersLogger.Escribir("Linea 4.1 " + caeDetRequest.Tributos?.Length);
-                    detalle.ImpTrib = caeDetRequest.Tributos.Sum(t => t.Importe);
+                    detalle.ImpTrib = HelpersGlobal.GetDecimales(caeDetRequest.Tributos.Sum(t => t.Importe));
                     if (isProduction)
                         detalle.Tributos = caeDetRequest.Tributos.Select(tributo => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(tributo, true)).ToArray();
                     else
@@ -106,8 +109,7 @@ namespace InnercorArca.V1.Procesos
                 {
                     if (habilitaLog) HelpersLogger.Escribir("Linea 5.1 " + caeDetRequest.ComprobantesAsociados?.Length);
                     if (isProduction)
-                        detalle.CbtesAsoc = caeDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, true)
-                        ).ToArray();
+                        detalle.CbtesAsoc = caeDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, true)).ToArray();
                     else
                         detalle.CbtesAsoc = caeDetRequest.ComprobantesAsociados.Select(cbteAsoc => (Wsfev1Homo.CbteAsoc)HelpersArca.ConvertirCompAsoc(cbteAsoc, false)).ToArray();
                 }
@@ -235,14 +237,14 @@ namespace InnercorArca.V1.Procesos
                 detalle.CbteDesde = InnCAEADetReq.CbteDesde;
                 detalle.CbteHasta = InnCAEADetReq.CbteHasta;
                 detalle.CbteFch = InnCAEADetReq.CbteFch;
-                detalle.ImpTotal = InnCAEADetReq.ImpTotal;
-                detalle.ImpTotConc = InnCAEADetReq.ImpTotConc;
-                detalle.ImpNeto = InnCAEADetReq.ImpNeto;
-                detalle.ImpOpEx = InnCAEADetReq.ImpOpEx;
-                detalle.ImpIVA = dIva;
-                detalle.ImpTrib = InnCAEADetReq.ImpTrib;
+                detalle.ImpTotal = HelpersGlobal.GetDecimales(InnCAEADetReq.ImpTotal);
+                detalle.ImpTotConc = HelpersGlobal.GetDecimales(InnCAEADetReq.ImpTotConc);
+                detalle.ImpNeto = HelpersGlobal.GetDecimales(InnCAEADetReq.ImpNeto);
+                detalle.ImpOpEx = HelpersGlobal.GetDecimales(InnCAEADetReq.ImpOpEx);
+                detalle.ImpIVA = HelpersGlobal.GetDecimales(dIva);
+                detalle.ImpTrib = HelpersGlobal.GetDecimales(InnCAEADetReq.ImpTrib);
                 detalle.MonId = InnCAEADetReq.MonId;
-                detalle.MonCotiz = caeDetRequest.MonCotiz;
+                detalle.MonCotiz = HelpersGlobal.GetDecimales(caeDetRequest.MonCotiz);
                 detalle.MonCotizSpecified = true;
                 detalle.MonId = caeDetRequest.MonId;
                 detalle.CondicionIVAReceptorId = caeDetRequest.CondicionIvaReceptor;
@@ -263,7 +265,7 @@ namespace InnercorArca.V1.Procesos
                 if (InnCAEADetReq.Iva?.Length > 0)
                 {
                     if (habilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 3.1");
-                    detalle.ImpIVA = InnCAEADetReq.Iva.Sum(t => t.Importe);
+                    detalle.ImpIVA = HelpersGlobal.GetDecimales(InnCAEADetReq.Iva.Sum(t => t.Importe));
                     if (isProduction)
                         detalle.Iva = InnCAEADetReq.Iva.Select(alicIva => (Wsfev1.AlicIva)HelpersArca.ConvertAlicIva(alicIva, true)).ToArray();
                     else
@@ -274,7 +276,7 @@ namespace InnercorArca.V1.Procesos
                 if (InnCAEADetReq.Tributos?.Length > 0)
                 {
                     if (habilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 4.1");
-                    detalle.ImpTrib = InnCAEADetReq.Tributos.Sum(t => t.Importe);
+                    detalle.ImpTrib = HelpersGlobal.GetDecimales(InnCAEADetReq.Tributos.Sum(t => t.Importe));
                     if (isProduction)
                         detalle.Tributos = InnCAEADetReq.Tributos.Select(t => (Wsfev1.Tributo)HelpersArca.ConvertirTributos(t, true)).ToArray();
                     else

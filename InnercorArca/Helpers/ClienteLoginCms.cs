@@ -269,8 +269,8 @@ namespace InnercorArca.V1.Helpers
                 xmlNodoExpirationTime = XmlLoginTicketRequest.SelectSingleNode("//expirationTime");
                 xmlNodoService = XmlLoginTicketRequest.SelectSingleNode("//service");
 
-                xmlNodoGenerationTime.InnerText = DateTime.Now.AddMinutes(-10).ToString("s");
-                xmlNodoExpirationTime.InnerText = DateTime.Now.AddMinutes(+10).ToString("s");
+                xmlNodoGenerationTime.InnerText = DateTime.Now.AddMinutes(-5).ToString("s");
+                xmlNodoExpirationTime.InnerText = DateTime.Now.AddMinutes(+5).ToString("s");
                 xmlNodoUniqueId.InnerText = Convert.ToString(_globalUniqueID);
                 xmlNodoService.InnerText = argServicio;
                 this.Service = argServicio;

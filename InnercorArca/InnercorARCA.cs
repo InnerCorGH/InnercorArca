@@ -224,7 +224,7 @@ namespace InnercorArca.V1
                 }
 
                 LoginTicket objTicketRespuesta = new LoginTicket();
-                string response = objTicketRespuesta.ObtenerLoginTicketResponse("wsfe", urlWSAA, pathCRT, pathKey, true, Produccion);
+                string response = objTicketRespuesta.ObtenerLoginTicketResponse(GlobalSettings.ServiceARCA.wsfe.ToString(), urlWSAA, pathCRT, pathKey, true, Produccion);
                 if (string.IsNullOrEmpty(response))
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"No se pudo obtener el CMS. Login 3");
@@ -361,7 +361,7 @@ namespace InnercorArca.V1
         }
         public string GetVersion()
         {
-            return $"1.2.7"; // Cambia esto según tu versión actual
+            return $"1.2.10"; // Cambia esto según tu versión actual
         }
         #endregion
 
@@ -525,7 +525,7 @@ namespace InnercorArca.V1
 
         #region [Métodos Autorizacion y Consulta CAE ]
         public bool Autorizar(int nPtoVta, int nTipCom)
-        {// llama al FECAESOlcicitar 
+        { 
             if (HabilitaLog) HelpersLogger.Escribir("Inicio Autorizar");
             NumeroCAE = "";
             VencimientoCAE = "";
@@ -533,27 +533,20 @@ namespace InnercorArca.V1
             Reproc = "";
             try
             {
-                //object objWSFEV1 = null;
+                
                 ////obtiene token y sign del archivo cache
                 if (TkValido == null)
                     TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
                 if (HabilitaLog) HelpersLogger.Escribir($"Autorizar Token Válido");
 
-                //llama a ARCA FECAESOlicitar y manda el objeto creado
-                //si devuelve error, setea el error y devuelve false
-                //dynamic respuesta;
                 int errCode = 0;
-                string errDesc = "";
-
-                //if (Produccion)
-                //    ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
-                //else
-                //    ArcaCAEHOMO.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, out respuesta);
+                string errDesc = ""; 
 
                 ArcaCAE.AutorizarARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, TkValido, nPtoVta, nTipCom, Produccion, out dynamic respuesta);
                 XmlResponse = HelpersGlobal.SerializeObjectAXml(respuesta);
 
                 if (HabilitaLog) HelpersLogger.Escribir("POS Autorización ARCA");
+
                 // Verificar la respuesta
                 string cae = ""; string vtoCae = ""; string result = ""; string reproc = ""; string xmlResponse = ""; string observ = ""; string eventDesc = "";
                 HelpersArca.ProcesarRespuestaFactura(HabilitaLog, respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result, ref reproc, ref observ, ref eventDesc,
@@ -565,8 +558,7 @@ namespace InnercorArca.V1
                 NumeroCAE = cae;
                 VencimientoCAE = vtoCae;
                 Observaciones = observ;
-                TraceBack = $"Autorizar {TraceBack}";
-                //XmlResponse = xmlResponse;
+                TraceBack = $"Autorizar {TraceBack}"; 
                 ErrorCode = errCode;
                 ErrorDesc = errDesc;
                 Excepcion = eventDesc;
@@ -667,28 +659,26 @@ namespace InnercorArca.V1
 
         public bool CAEAInformar(int nPtoVta, int nTipCom, string sCAE)
         {
-            //FECAEARegInformativo
+             
             NumeroCAE = "";
             VencimientoCAE = "";
             Result = "";
             Reproc = "";
             try
             {
-                if (HabilitaLog) HelpersLogger.Escribir("Inicio CAEAInformar");
-                //object objWSFEV1 = null;
+                if (HabilitaLog) HelpersLogger.Escribir("Inicio CAEAInformar"); 
                 ////obtiene token y sign del archivo cache
                 if (TkValido == null)
                     TkValido = HelpersCache.RecuperarTokenSign(HelpersCache.LeerBloqueServicio(PathCache, service));
 
                 if (HabilitaLog) HelpersLogger.Escribir("TkValido CAEAInformar");
 
-                //llama a ARCA FECAESOlicitar y manda el objeto creado
-                //si devuelve error, setea el error y devuelve false
-                //dynamic respuesta;
+                
                 int errCode = 0;
                 string errDesc = ""; 
                 ArcaCAE.RegInformativoARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, Produccion, out dynamic respuesta);
-                
+                XmlResponse = respuesta;
+
                 // Verificar la respuesta
                 string cae = ""; string vtoCae = ""; string result = ""; string reproc = ""; string xmlResponse = ""; string observ = ""; string eventDesc = "";
                 HelpersArca.ProcesarRespuestaFactura(HabilitaLog, respuesta, ref errCode, ref errDesc, ref xmlResponse, ref cae, ref vtoCae, ref result,
@@ -701,7 +691,6 @@ namespace InnercorArca.V1
                 VencimientoCAE = vtoCae;
                 Observaciones = observ;
                 TraceBack = $"CAEAINformar {TraceBack}";
-                XmlResponse = xmlResponse;
                 ErrorCode = errCode;
                 ErrorDesc = errDesc;
                 Excepcion = eventDesc;
@@ -836,6 +825,38 @@ namespace InnercorArca.V1
                     return;
                 }
                 if (HabilitaLog) HelpersLogger.Escribir($"AgregaFactura Pos Validaciones Fecha");
+
+                // Redondear a 2 decimales
+                nImpTot = Math.Round(nImpTot, 2);
+                nImpCon = Math.Round(nImpCon, 2);
+                nImpNet = Math.Round(nImpNet, 2);
+                nImpOpc = Math.Round(nImpOpc, 2);
+                // Validar que la parte entera no exceda 13 dígitos
+                if (Math.Floor(nImpTot).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImpTot no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpTot no puede tener más de 13 dígitos.", "Agrega Factura 6");
+                    return;
+                }
+                if (Math.Floor(nImpCon).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImpCon no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpCon no puede tener más de 13 dígitos.", "Agrega Factura 7");
+                    return;
+                }
+                if (Math.Floor(nImpNet).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImpNet no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpNet no puede tener más de 13 dígitos.", "Agrega Factura 8");
+                    return;
+                }
+                if (Math.Floor(nImpOpc).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImpOpc no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpOpc no puede tener más de 13 dígitos.", "Agrega Factura 5");
+                    return;
+                }
+
                 CAEDetRequest = new InnercorArcaModels.CAEDetRequest()
                 {
                     Concepto = nConcep,
@@ -873,6 +894,21 @@ namespace InnercorArca.V1
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaIVA ");
             try
             {
+                importeBase = Math.Round(importeBase, 2);
+                importeIVA = Math.Round(importeIVA, 2);
+                // Validar que la parte entera no exceda 13 dígitos
+                if (Math.Floor(importeBase).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImporteBase no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpBase no puede tener más de 13 dígitos.", "Agrega IVA 1");
+                    return;
+                }
+                if (Math.Floor(importeIVA).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImporteIVA no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpIVA no puede tener más de 13 dígitos.", "Agrega IVA 2");
+                    return;
+                }
                 InnercorArcaModels.AlicIva nuevaAlicuota = new InnercorArcaModels.AlicIva()
                 {
                     BaseImp = Math.Abs(importeBase),
@@ -898,7 +934,7 @@ namespace InnercorArca.V1
                 }
 
                 // Acumular valores en la clase
-                Iva += importeIVA;
+                Iva += importeIVA; 
                 Neto += importeBase;
 
                 TraceBack = $"AgregaIVA {CAEDetRequest.Iva.Count()}";
@@ -915,6 +951,7 @@ namespace InnercorArca.V1
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaOpcional {codigo} - {valor}");
             try
             {
+                
                 InnercorArcaModels.Opcional nuevoOpcional = new InnercorArcaModels.Opcional()
                 {
                     Id = codigo,
@@ -952,6 +989,29 @@ namespace InnercorArca.V1
             if (HabilitaLog) HelpersLogger.Escribir($"Inicia AgregaTributo {codimp} - {descri} - {impbase} - {alicuo} - {import}");
             try
             {
+                // Redondear a 2 decimales
+                impbase = Math.Round(impbase, 2);
+                alicuo = Math.Round(alicuo, 2);
+                import = Math.Round(import, 2);
+                // Validar que la parte entera no exceda 13 dígitos
+                if (Math.Floor(impbase).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera ImpBase no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpBase no puede tener más de 13 dígitos.", "Agrega Tributo 1");
+                    return;
+                }
+                if (Math.Floor(alicuo).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera Alicuota no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera Alicuota no puede tener más de 13 dígitos.", "Agrega Tributo 2");
+                    return;
+                }
+                if (Math.Floor(import).ToString().Length > 13)
+                {
+                    if (HabilitaLog) HelpersLogger.Escribir($"La parte entera Importe no puede tener más de 13 dígitos.");
+                    SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera Importe no puede tener más de 13 dígitos.", "Agrega Tributo 3");
+                    return;
+                }
                 InnercorArcaModels.Tributo nuevoTributo = new InnercorArcaModels.Tributo()
                 {
                     Id = codimp,

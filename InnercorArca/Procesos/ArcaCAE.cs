@@ -327,6 +327,8 @@ namespace InnercorArca.V1.Procesos
                     ws = new Wsfev1.Service();
                 else
                     ws = new Wsfev1Homo.Service();
+
+
                 respuesta = ((dynamic)ws).FECAESolicitar(auth, solicitud);
 
                 if (habilitaLog) HelpersLogger.Escribir($"Linea 8 {HelpersGlobal.SerializeObjectAXml(respuesta)}");

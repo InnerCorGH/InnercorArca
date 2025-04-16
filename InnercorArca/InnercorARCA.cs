@@ -364,7 +364,7 @@ namespace InnercorArca.V1
         }
         public string GetVersion()
         {
-            return $"1.2.12"; // Cambia esto según tu versión actual
+            return $"1.2.14"; // Cambia esto según tu versión actual
         }
         #endregion
 
@@ -699,7 +699,7 @@ namespace InnercorArca.V1
                 int errCode = 0;
                 string errDesc = "";
                 ArcaCAE.RegInformativoARCA(HabilitaLog, Cuit, CAEDetRequest, Iva, sCAE, CbteFchGen, TkValido, nPtoVta, nTipCom, Produccion, out dynamic respuesta);
-                XmlResponse = respuesta;
+                XmlResponse = HelpersGlobal.SerializeToXml( respuesta);
 
                 // Verificar la respuesta
                 string cae = ""; string vtoCae = ""; string result = ""; string reproc = ""; string xmlResponse = ""; string observ = ""; string eventDesc = "";

@@ -1,9 +1,6 @@
-﻿using InnercorArca.V1.Aws;
-using InnercorArca.V1.ModelsCOM;
+﻿using InnercorArca.V1.ModelsCOM;
 using System;
 using System.Collections.Generic;
-using System.EnterpriseServices.CompensatingResourceManager;
-using System.Security.Cryptography;
 
 namespace InnercorArca.V1.Helpers
 {
@@ -24,7 +21,7 @@ namespace InnercorArca.V1.Helpers
             return (int)GlobalSettings.CondicionIVA.IvaSujetoExento;
         }
 
-        public static ContribuyenteCOM MapToContribuyenteCOM(dynamic datosGenerales )
+        public static ContribuyenteCOM MapToContribuyenteCOM(dynamic datosGenerales)
         {
 
             if (datosGenerales == null)
@@ -41,10 +38,10 @@ namespace InnercorArca.V1.Helpers
                     NombreSimple = datosGenerales.nombre,
                     CondicionIva = (int)GlobalSettings.CondicionIVA.ConsumidorFinal,
                     CondicionIvaDesc = GlobalSettings.CondicionIVA.ConsumidorFinal.ToString(),
-                    TipoDocumento="NO DISPONIBLE",
-                    NumeroDocumento="NO DISPONIBLE",
+                    TipoDocumento = "NO DISPONIBLE",
+                    NumeroDocumento = "NO DISPONIBLE",
                     DomicilioFiscal = new DomicilioCOM(),
-                    IdPersona= datosGenerales.idPersona.ToString()
+                    IdPersona = datosGenerales.idPersona.ToString()
                 };
 
             }
@@ -155,8 +152,8 @@ namespace InnercorArca.V1.Helpers
 
                     if (Datos.datosRegimenGeneral != null)
                     {
-                        if (Datos.datosRegimenGeneral.categoriaAutonomo != null) 
-                            contribuyenteCOM.IdCatAutonomo = Datos.datosRegimenGeneral.categoriaAutonomo.ToString(); 
+                        if (Datos.datosRegimenGeneral.categoriaAutonomo != null)
+                            contribuyenteCOM.IdCatAutonomo = Datos.datosRegimenGeneral.categoriaAutonomo.ToString();
                         //IMpuestos 
                         var impuestosList_ = new List<Aws.impuesto>(Datos.datosRegimenGeneral.impuesto);
                         var Impuestos_ = HelperContribuyenteCOM.CargarImpuestos(impuestosList_, contribuyenteCOM);
@@ -171,8 +168,8 @@ namespace InnercorArca.V1.Helpers
                     }
                     else
                     {
-                        contribuyenteCOM.CondicionIva =(int) GlobalSettings.CondicionIVA.ConsumidorFinal;
-                        contribuyenteCOM.CondicionIvaDesc = GlobalSettings.CondicionIVA.ConsumidorFinal .ToString();
+                        contribuyenteCOM.CondicionIva = (int)GlobalSettings.CondicionIVA.ConsumidorFinal;
+                        contribuyenteCOM.CondicionIvaDesc = GlobalSettings.CondicionIVA.ConsumidorFinal.ToString();
 
                     }
 

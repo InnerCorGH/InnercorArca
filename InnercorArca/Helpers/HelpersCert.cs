@@ -135,13 +135,7 @@ namespace InnercorArca.V1.Helpers
             errorMessage = string.Empty;
             try
             {
-                // Cargar certificado desde el archivo .crt
-                //var certificate = new X509Certificate2(crtPath, keyPath,
-                //    X509KeyStorageFlags.MachineKeySet |
-                //    X509KeyStorageFlags.PersistKeySet |
-                //    X509KeyStorageFlags.Exportable);
-                ////byte[] certBytes = File.ReadAllBytes(crtPath);
-                ////var certificate = new X509Certificate2(certBytes);
+                 
                 string pem = File.ReadAllText(crtPath);
                 byte[] certBuffer = Convert.FromBase64String(
                     pem.Replace("-----BEGIN CERTIFICATE-----", "")

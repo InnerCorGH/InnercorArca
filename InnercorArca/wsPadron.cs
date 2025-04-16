@@ -1,14 +1,12 @@
 ﻿using InnercorArca.V1.Helpers;
 using InnercorArca.V1.ModelsCOM;
-using Microsoft.Win32;
-using Org.BouncyCastle.Security;
 using System;
 using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using static InnercorArca.V1.ModelsCOM.CacheResultCOM;
 
 namespace InnercorArca.V1
 {
@@ -72,7 +70,7 @@ namespace InnercorArca.V1
         #region[Declaración Variables Internas]
         internal bool Produccion { get; set; } = false;
         internal string PathCache { get; private set; } = string.Empty;
-         
+
         // Variable estática para que persista mientras la DLL esté en uso
         private static CacheResult TkValido;
         internal ContribuyenteCOM Contribuyente { get; private set; }
@@ -98,7 +96,7 @@ namespace InnercorArca.V1
 
             try
             {
-                 string urlWSAA = string.Empty;
+                string urlWSAA = string.Empty;
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = ModoProduccion;
                 urlWSAA = Produccion ? GlobalSettings.urlWSAAProd : GlobalSettings.urlWSAAHomo;
@@ -130,7 +128,7 @@ namespace InnercorArca.V1
 
                             return true;
                         }
-                        
+
                     }
                 }
                 // Cargar el certificado y la clave privada directamente (sin usar .pfx)
@@ -224,7 +222,7 @@ namespace InnercorArca.V1
         #endregion
 
         #region [Métodos Internos ] 
-        private bool TryGetPersona(string sCuit, ref dynamic response )
+        private bool TryGetPersona(string sCuit, ref dynamic response)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"TryGetPersona sCuit:{sCuit}  ");
             try
@@ -249,11 +247,11 @@ namespace InnercorArca.V1
                 catch (Exception ex)
                 {
 
-                    errorDesc  = ex.Message;
+                    errorDesc = ex.Message;
 
                     SetError(GlobalSettings.Errors.GET_ERROR, errorDesc, "Errores Respuesta GetPersona ");
                     return false;
-                   
+
                 }
 
 

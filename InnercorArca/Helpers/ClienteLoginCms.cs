@@ -1,55 +1,3 @@
-//<summary> 
-//EJEMPLO - Consola cliente del webservice de autenticacion y autorizacion 
-//</summary> 
-//<description> 
-// Consume el metodo LoginCms del WSAA 
-// Muestra en stdout el login ticket response 
-//</description> 
-//<version>8.5.26.1200</version> 
-//<usage> 
-// clientelogincms (opciones) ... 
-// opciones: 
-// -s servicio ID del servicio de negocio 
-// -w url URL del WSDL del WSAA 
-// -c certificado Ruta del certificado (con clave privada) 
-// -v on|off Salida detallada on/off 
-// -? Muestra ayuda de uso 
-//</usage> 
-//<platform>.NET Framework 2.0</platform> 
-//<disclaimer> 
-// El Departamento de Arquitectura Informatica de la AFIP (DeArIn/AFIP), pone a disposicion 
-// el siguiente codigo para su utilizacion con el WebService de Facturacion Electronica (WSFE) 
-// de la AFIP. 
-// 
-// El mismo no puede ser re-distribuido, publicado o descargado en forma total o parcial, ya sea 
-// en forma electronica, mecanica u optica, sin la autorizacion de DeArIn/AFIP. El uso no 
-// autorizado del mismo esta prohibido. 
-// 
-// DeArIn/AFIP no asume ninguna responsabilidad de los errores que pueda contener el codigo ni la 
-// obligacion de subsanar dichos errores o informar de la existencia de los mismos. 
-// 
-// DeArIn/AFIP no asume ninguna responsabilidad que surja de la utilizacion del codigo, ya sea por 
-// utilizacion ilegal de patentes, perdida de beneficios, perdida de informacion o cualquier otro 
-// inconveniente. 
-// 
-// Bajo ninguna circunstancia DeArIn/AFIP podra ser indicada como responsable por consecuencias y/o 
-// incidentes ya sean directos o indirectos que puedan surgir de la utilizacion del codigo. 
-// 
-// DeSoTe/AFIP no da ninguna garantia, expresa o implicita, de la utilidad del codigo, si el mismo es 
-// correcto, o si cumple con los requerimientos de algun proposito en particular. 
-// 
-// DeArIn/AFIP puede realizar cambios en cualquier momento en el codigo sin previo aviso. 
-// 
-// El codigo debera ser evaluado, verificado, corregido y/o adaptado por personal tecnico calificado 
-// de las entidades que lo utilicen. 
-// 
-// EL SIGUIENTE CODIGO ES DISTRIBUIDO PARA EVALUACION, CON TODOS SUS ERRORES Y OMISIONES. LA 
-// RESPONSABILIDAD DEL CORRECTO FUNCIONAMIENTO DEL MISMO YA SEA POR SI SOLO O COMO PARTE DE 
-// OTRA APLICACION, QUEDA A CARGO DE LAS ENTIDADES QUE LO UTILICEN. LA UTILIZACION DEL CODIGO 
-// SIGNIFICA LA ACEPTACION DE TODOS LOS TERMINOS Y CONDICIONES MENCIONADAS ANTERIORMENTE. 
-// 
-// DeArIn-AFIP 
-//</disclaimer> 
 
 using System;
 using System.IO;
@@ -143,12 +91,13 @@ namespace InnercorArca.V1.Helpers
 
                 if (this._verboseMode)
                 {
-                    // Console.WriteLine(XmlLoginTicketRequest.OuterXml);
+                    HelpersLogger.Escribir("***LoginTicketRequest: " + XmlLoginTicketRequest.OuterXml);
                 }
             }
 
             catch (Exception excepcionAlGenerarLoginTicketRequest)
             {
+                if (this._verboseMode) HelpersLogger.Escribir("Error al generar el LoginTicketRequest: " + excepcionAlGenerarLoginTicketRequest.Message);
                 throw new Exception("***Error GENERANDO el LoginTicketRequest : " + excepcionAlGenerarLoginTicketRequest.Message);
             }
 
@@ -157,15 +106,14 @@ namespace InnercorArca.V1.Helpers
             {
                 if (this._verboseMode)
                 {
-                    //  Console.WriteLine("***Leyendo certificado: {0}", RutaDelCertificadoFirmante);
+                    HelpersLogger.Escribir("***Leyendo certificado: " + RutaDelCertificadoFirmante);
                 }
 
                 X509Certificate2 certFirmante = CertificadosX509Lib.ObtieneCertificadoDesdeArchivo(RutaDelCertificadoFirmante, clavePFX);
 
                 if (this._verboseMode)
                 {
-                    //    Console.WriteLine("***Firmando: ");
-                    //   Console.WriteLine(XmlLoginTicketRequest.OuterXml);
+                    HelpersLogger.Escribir("***Firmando: " + XmlLoginTicketRequest.OuterXml);
                 }
 
                 // Convierto el login ticket request a bytes, para firmar 
@@ -179,6 +127,7 @@ namespace InnercorArca.V1.Helpers
 
             catch (Exception excepcionAlFirmar)
             {
+                if (this._verboseMode) HelpersLogger.Escribir("Error al firmar el LoginTicketRequest: " + excepcionAlFirmar.Message);
                 throw new Exception("***Error FIRMANDO el LoginTicketRequest : " + excepcionAlFirmar.Message);
             }
 
@@ -187,9 +136,7 @@ namespace InnercorArca.V1.Helpers
             {
                 if (this._verboseMode)
                 {
-                    //    Console.WriteLine("***Llamando al WSAA en URL: {0}", argUrlWsaa);
-                    //     Console.WriteLine("***Argumento en el request:");
-                    //      Console.WriteLine(cmsFirmadoBase64);
+                    HelpersLogger.Escribir("***Llamando al WSAA en URL: " + argUrlWsaa);
                 }
 
                 InnercorArca.V1.Wsaa.LoginCMSService servicioWsaa = new InnercorArca.V1.Wsaa.LoginCMSService
@@ -201,13 +148,13 @@ namespace InnercorArca.V1.Helpers
 
                 if (this._verboseMode)
                 {
-                    //      Console.WriteLine("***LoguinTicketResponse: ");
-                    //      Console.WriteLine(loginTicketResponse);
+                    HelpersLogger.Escribir("***Argumento en el request: " + cmsFirmadoBase64);
                 }
             }
 
             catch (Exception excepcionAlInvocarWsaa)
             {
+                if (this._verboseMode) HelpersLogger.Escribir("Error al invocar el servicio WSAA: " + excepcionAlInvocarWsaa.Message);
                 throw new Exception("***Error INVOCANDO al servicio WSAA : " + excepcionAlInvocarWsaa.Message);
             }
 
@@ -226,6 +173,7 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception excepcionAlAnalizarLoginTicketResponse)
             {
+                if (this._verboseMode) HelpersLogger.Escribir("Error al analizar el LoginTicketResponse: " + excepcionAlAnalizarLoginTicketResponse.Message);
                 throw new Exception("***Error ANALIZANDO el LoginTicketResponse : " + excepcionAlAnalizarLoginTicketResponse.Message);
             }
 
@@ -278,14 +226,14 @@ namespace InnercorArca.V1.Helpers
                 _globalUniqueID += 1;
 
                 if (this._verboseMode)
-                { 
+                {
                     HelpersLogger.Escribir("LoginTicketRequest: " + XmlLoginTicketRequest.OuterXml);
                 }
             }
 
             catch (Exception excepcionAlGenerarLoginTicketRequest)
             {
-                HelpersLogger.Escribir("Error al generar el LoginTicketRequest: " + excepcionAlGenerarLoginTicketRequest.Message);
+                if (this._verboseMode) HelpersLogger.Escribir("Error al generar el LoginTicketRequest: " + excepcionAlGenerarLoginTicketRequest.Message);
                 throw new Exception("***Error GENERANDO el LoginTicketRequest : " + excepcionAlGenerarLoginTicketRequest.Message);
             }
 
@@ -293,15 +241,14 @@ namespace InnercorArca.V1.Helpers
             try
             {
                 if (this._verboseMode)
-                { 
+                {
                     HelpersLogger.Escribir("Leyendo certificado: " + RutaDelCertificadoFirmante);
                 }
 
-                //X509Certificate2 certFirmante = CertificadosX509Lib.ObtieneCertificadoDesdeArchivo(RutaDelCertificadoFirmante);
                 X509Certificate2 certFirmante = HelpersCert.ObtieneCertificadoDesdeArchivos(RutaDelCertificadoFirmante, RutaDelKey);
 
                 if (this._verboseMode)
-                { 
+                {
                     HelpersLogger.Escribir("Firmando: " + XmlLoginTicketRequest.OuterXml);
                 }
 
@@ -316,7 +263,7 @@ namespace InnercorArca.V1.Helpers
 
             catch (Exception excepcionAlFirmar)
             {
-                HelpersLogger.Escribir("Error al firmar el LoginTicketRequest: " + excepcionAlFirmar.Message);
+                if (this._verboseMode) HelpersLogger.Escribir("Error al firmar el LoginTicketRequest: " + excepcionAlFirmar.Message);
                 throw new Exception("***Error FIRMANDO el LoginTicketRequest : " + excepcionAlFirmar.Message);
             }
 
@@ -353,7 +300,7 @@ namespace InnercorArca.V1.Helpers
 
             catch (Exception excepcionAlInvocarWsaa)
             {
-                HelpersLogger.Escribir("Error al invocar el servicio WSAA: " + excepcionAlInvocarWsaa.Message);
+                if (this._verboseMode) HelpersLogger.Escribir("Error al invocar el servicio WSAA: " + excepcionAlInvocarWsaa.Message);
                 throw new Exception("***Error INVOCANDO al servicio WSAA : " + excepcionAlInvocarWsaa.Message);
             }
 
@@ -372,7 +319,7 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception excepcionAlAnalizarLoginTicketResponse)
             {
-                HelpersLogger.Escribir("Error al analizar el LoginTicketResponse: " + excepcionAlAnalizarLoginTicketResponse.Message);
+                if (this._verboseMode) HelpersLogger.Escribir("Error al analizar el LoginTicketResponse: " + excepcionAlAnalizarLoginTicketResponse.Message);
                 throw new Exception("***Error ANALIZANDO el LoginTicketResponse : " + excepcionAlAnalizarLoginTicketResponse.Message);
             }
 
@@ -404,7 +351,7 @@ namespace InnercorArca.V1.Helpers
             try
             {
                 // Pongo el mensaje en un objeto ContentInfo (requerido para construir el obj SignedCms) 
-                System.Security.Cryptography.Pkcs.ContentInfo infoContenido = new System.Security.Cryptography.Pkcs.ContentInfo(argBytesMsg);
+                ContentInfo infoContenido = new ContentInfo(argBytesMsg);
                 SignedCms cmsFirmado = new SignedCms(infoContenido);
 
                 // Creo objeto CmsSigner que tiene las caracteristicas del firmante 
@@ -424,7 +371,7 @@ namespace InnercorArca.V1.Helpers
                 if (VerboseMode)
                 {
                     //Console.WriteLine("***OK mensaje firmado");
-                    HelpersLogger.Escribir("***OK mensaje firmado");    
+                    HelpersLogger.Escribir("***OK mensaje firmado");
                 }
 
                 // Encodeo el mensaje PKCS #7. 
@@ -457,6 +404,10 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception excepcionAlImportarCertificado)
             {
+                if (VerboseMode)
+                {
+                    HelpersLogger.Escribir("Error al importar el certificado: " + excepcionAlImportarCertificado.Message);
+                }
                 throw new Exception("argArchivo=" + argArchivo + " excepcion=" + excepcionAlImportarCertificado.Message + " " + excepcionAlImportarCertificado.StackTrace);
 
             }
@@ -480,6 +431,10 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception excepcionAlImportarCertificado)
             {
+                if (VerboseMode)
+                {
+                    HelpersLogger.Escribir("Error al importar el certificado: " + excepcionAlImportarCertificado.Message);
+                }
                 throw new Exception("argArchivo=" + argArchivo + " excepcion=" + excepcionAlImportarCertificado.Message + " " + excepcionAlImportarCertificado.StackTrace);
 
             }

@@ -9,7 +9,7 @@ public static class HelperContribuyenteCOM
         if (source == null || source.Count == 0)
             return;
 
-        var categorias = new CategoriaMonotributoCOM[1]; // source.Count];
+        var categorias = new CategoriaMonotributoCOM[1];
 
         for (int i = 0; i < source.Count; i++)
         {
@@ -62,34 +62,6 @@ public static class HelperContribuyenteCOM
         destino.SetActividades(actividades);
     }
 
-    //public static void CargarDomicilioFiscal(List<domicilio> source, ContribuyenteCOM destino)
-    //{
-    //    if (source == null || source.Count == 0)
-    //        return;
-
-    //    var domicilios = new DomicilioCOM[source.Count];
-
-    //    for (int i = 0; i < source.Count; i++)
-    //    {
-    //        domicilios[i] = new DomicilioCOM
-    //        {
-
-    //            CodPostal = source[i].codPostal,
-    //            DatoAdicional = source[i].datoAdicional,
-    //            DescripcionProvincia = source[i].descripcionProvincia,
-    //            Direccion = source[i].direccion,
-    //            IdProvincia = source[i].idProvincia.ToString(),
-    //            Localidad = source[i].localidad,
-    //            TipoDatoAdicional = source[i].tipoDatoAdicional,
-    //            TipoDomicilio = source[i].tipoDomicilio
-    //        };
-
-    //    }
-
-
-
-    //    destino.SetDomicilioFiscal(domicilios);
-    //}
     public static void CargarDomicilioFiscal(List<domicilio> source, ContribuyenteCOM destino)
     {
         if (source == null || source.Count == 0)
@@ -103,20 +75,16 @@ public static class HelperContribuyenteCOM
             {
 
                 CodPostal = source[i].codPostal,
-                //DatoAdicional = source[i].datoAdicional,
                 Provincia = source[i].descripcionProvincia,
                 Direccion = source[i].direccion,
                 IdProvincia = source[i].idProvincia.ToString(),
 
                 Localidad = source[i].localidad,
-                //TipoDatoAdicional = source[i].tipoDatoAdicional,
-                //TipoDomicilio = source[i].tipoDomicilio
             };
 
         }
 
         destino.DomicilioFiscal = domicilios[0];
 
-        //    destino.SetDomicilioFiscal(domicilios);
     }
-    }
+}

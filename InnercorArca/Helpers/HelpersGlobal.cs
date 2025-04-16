@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
-using System.Linq.Expressions;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
@@ -10,7 +9,7 @@ namespace InnercorArca.V1.Helpers
 {
     public static class HelpersGlobal
     {
-       
+
 
 
         public static string SerializeToXml<T>(T obj)
@@ -135,7 +134,8 @@ namespace InnercorArca.V1.Helpers
 
         public static double GetDecimales(double valor)
         {
-            try{
+            try
+            {
                 // Formatear el número a 2 decimales 
                 var parteEntera = (long)valor;
                 var parteEnteraRecortada = long.Parse(parteEntera.ToString().Length > 13
@@ -150,7 +150,8 @@ namespace InnercorArca.V1.Helpers
 
 
                 return decimales;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw ex;
             }

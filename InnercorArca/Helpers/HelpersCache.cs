@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Xml;
-using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using System.Xml; 
+using static InnercorArca.V1.ModelsCOM.CacheResultCOM;
 
 namespace InnercorArca.V1.Helpers
 {
@@ -79,10 +79,10 @@ namespace InnercorArca.V1.Helpers
 
                 var newLines = new string[]
                 {
-            $"{service}!{generatedTime:yyyyMMddHHmmss}",
-            $"token={token}",
-            $"sign={sign}",
-            $"expTime={expirationDateTime.UtcDateTime:o}"
+                    $"{service}!{generatedTime:yyyyMMddHHmmss}",
+                    $"token={token}",
+                    $"sign={sign}",
+                    $"expTime={expirationDateTime.UtcDateTime:o}"
                 };
 
                 List<string> allLines = File.Exists(pathCache)

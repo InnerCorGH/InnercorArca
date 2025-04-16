@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace InnercorArca.V1.Helpers
+﻿namespace InnercorArca.V1.Helpers
 {
     public static class GlobalSettings
     {
 
-        public static string urlWSAAHomo= "https://wsaahomo.afip.gov.ar/ws/services/LoginCms";
+        public static string urlWSAAHomo = "https://wsaahomo.afip.gov.ar/ws/services/LoginCms";
         public static string urlWSAAProd = "https://wsaa.afip.gov.ar/ws/services/LoginCms";
 
 
@@ -56,7 +50,7 @@ namespace InnercorArca.V1.Helpers
         public enum TipoInformeARCA : int
         {
             CAE = 1,
-            CAEA= 2
+            CAEA = 2
         }
     }
 }

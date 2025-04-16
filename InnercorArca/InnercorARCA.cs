@@ -1,15 +1,14 @@
 ﻿using InnercorArca.V1.Helpers;
+using InnercorArca.V1.ModelsCOM;
 using InnercorArca.V1.Procesos;
-using Org.BouncyCastle.Ocsp;
 using System;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
-using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using System.Security.Cryptography.X509Certificates; 
+using static InnercorArca.V1.ModelsCOM.CacheResultCOM;
 
 namespace InnercorArca.V1
 {
@@ -139,8 +138,8 @@ namespace InnercorArca.V1
         internal string FechaTope { get; set; }
         internal string FechaProceso { get; set; }
 
-        internal InnercorArcaModels.CAEDetRequest CAEDetRequest { get; set; }
-        internal InnercorArcaModels.InnCAEADetRequest InnCAEADetReq { get; set; }
+        internal CAECOM.CAEDetRequest CAEDetRequest { get; set; }
+        internal CAEACOM.InnCAEADetRequest InnCAEADetReq { get; set; }
 
         internal double Neto { get; set; }
         internal double Iva { get; set; }
@@ -250,7 +249,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
@@ -328,10 +328,8 @@ namespace InnercorArca.V1
             {
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 if (HabilitaLog)
-                {
-                    HelpersLogger.Escribir($"Error en Dummy(): {ex.Message} {ex.StackTrace}");
+                    HelpersLogger.Escribir($"Exception en Dummy(): {ex.Message} {ex.StackTrace}");
 
-                }
                 return false;
             }
         }
@@ -339,6 +337,7 @@ namespace InnercorArca.V1
 
         public void Reset()
         {
+            if (HabilitaLog) HelpersLogger.Escribir($"Inicio Reset");
             try
             {            //Limpia los variables globales
 
@@ -360,11 +359,13 @@ namespace InnercorArca.V1
             catch (Exception ex)
             {
                 SetError(GlobalSettings.Errors.EXCEPTION, $"Error al invocar Reset {ex.Message}", ex.StackTrace);
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Exception Error en Reset(): {ex.Message} {ex.StackTrace}");
             }
         }
         public string GetVersion()
         {
-            return $"1.2.12"; // Cambia esto según tu versión actual
+            return $"1.2.13"; // Cambia esto según tu versión actual
         }
         #endregion
 
@@ -394,7 +395,7 @@ namespace InnercorArca.V1
                 if (Produccion)
                 {
                     objWSFEV1 = new Wsfev1.Service();
-                     wsfev1 = (Wsfev1.Service)objWSFEV1;
+                    wsfev1 = (Wsfev1.Service)objWSFEV1;
                     try
                     {
                         objFERecuperaLastCbteResponse = wsfev1.FECompUltimoAutorizado((Wsfev1.FEAuthRequest)feAuthRequest, nPtoVta, nTipCom);
@@ -403,7 +404,7 @@ namespace InnercorArca.V1
                     {
                         if (HabilitaLog) HelpersLogger.Escribir($"PLATFORM NOT SUPPORTED: {ex.Message} - {ex.StackTrace}");
                     }
-                     
+
                     if (HabilitaLog) HelpersLogger.Escribir($"RecuperaLastCMP {HelpersGlobal.SerializeObjectAXml(objFERecuperaLastCbteResponse)}");
 
                     HelpersArca.ProcesarRespuesta(HabilitaLog, objFERecuperaLastCbteResponse, ref errCode, ref errDesc, ref xmlResponse);
@@ -413,17 +414,17 @@ namespace InnercorArca.V1
                 else
                 {
                     objWSFEV1 = new Wsfev1Homo.Service();
-                     wsfev1 = (Wsfev1Homo.Service)objWSFEV1; 
+                    wsfev1 = (Wsfev1Homo.Service)objWSFEV1;
                     try
                     {
-                         objFERecuperaLastCbteResponse = wsfev1.FECompUltimoAutorizado((Wsfev1Homo.FEAuthRequest)feAuthRequest, nPtoVta, nTipCom);
+                        objFERecuperaLastCbteResponse = wsfev1.FECompUltimoAutorizado((Wsfev1Homo.FEAuthRequest)feAuthRequest, nPtoVta, nTipCom);
                     }
                     catch (PlatformNotSupportedException ex)
                     {
                         if (HabilitaLog) HelpersLogger.Escribir($"PLATFORM NOT SUPPORTED: {ex.Message} - {ex.StackTrace}");
                     }
 
-                    
+
                     if (HabilitaLog) HelpersLogger.Escribir($"RecuperaLastCMP {HelpersGlobal.SerializeObjectAXml(objFERecuperaLastCbteResponse)}");
 
                     HelpersArca.ProcesarRespuesta(HabilitaLog, objFERecuperaLastCbteResponse, ref errCode, ref errDesc, ref xmlResponse);
@@ -440,7 +441,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.Message);
                 UltimoNumero = -1;
                 return false;
@@ -450,7 +452,8 @@ namespace InnercorArca.V1
         //Devuelve CAE y FECHA de VTO segun Tipo COmprobante, PtoVta y Nro OCmp
         public bool CmpConsultar(int nTipCom, int nPtoVta, long nNroCmp, ref string cNroCAE, ref string cVtoCAE)
         {
-            if (HabilitaLog) HelpersLogger.Escribir($"Inicio CmpConsultar  TipCom:{nTipCom} PtoVta:{nPtoVta} NroCmp:{nNroCmp} NroCAE: {cNroCAE} VtoCAE: {cVtoCAE}");
+            if (HabilitaLog)
+                HelpersLogger.Escribir($"Inicio CmpConsultar  TipCom:{nTipCom} PtoVta:{nPtoVta} NroCmp:{nNroCmp} NroCAE: {cNroCAE} VtoCAE: {cVtoCAE}");
             try
             {
                 // Inicialización de valores de salida
@@ -543,7 +546,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
@@ -595,7 +599,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
                 return false;
             }
@@ -644,7 +649,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error CAEAConsultar Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error CAEAConsultar Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
@@ -677,7 +683,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error CAEASolicitar Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error CAEASolicitar Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
@@ -725,7 +732,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error CAEAINformar Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error CAEAINformar Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
                 return false;
             }
@@ -744,7 +752,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error CAEACbteFchHsGen Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"Error CAEACbteFchHsGen Exception {ex.Message} {TraceBack} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"CAEACbteFchHsGen");
             }
 
@@ -882,7 +891,7 @@ namespace InnercorArca.V1
                     return;
                 }
 
-                CAEDetRequest = new InnercorArcaModels.CAEDetRequest()
+                CAEDetRequest = new CAECOM.CAEDetRequest()
                 {
                     Concepto = nConcep,
                     DocTipo = nTipDoc,
@@ -909,7 +918,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"ERROR Exception CAEDetRequest: {ex.Message} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"ERROR Exception CAEDetRequest: {ex.Message} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"CAEDetRequest {HelpersGlobal.SerializeObjectAXml(CAEDetRequest)}");
             }
 
@@ -934,7 +944,7 @@ namespace InnercorArca.V1
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera ImpIVA no puede tener más de 13 dígitos.", "Agrega IVA 2");
                     return;
                 }
-                InnercorArcaModels.AlicIva nuevaAlicuota = new InnercorArcaModels.AlicIva()
+                CAECOM.AlicIva nuevaAlicuota = new CAECOM.AlicIva()
                 {
                     BaseImp = Math.Abs(importeBase),
                     Id = codigoAlicuota,
@@ -945,10 +955,10 @@ namespace InnercorArca.V1
                 if (nuevaAlicuota != null)
                 {
                     if (CAEDetRequest.Iva == null)
-                        CAEDetRequest.Iva = new InnercorArcaModels.AlicIva[0]; // Initialize the array
+                        CAEDetRequest.Iva = new CAECOM.AlicIva[0]; // Initialize the array
 
                     // Create a new array with the new size
-                    var newArray = new InnercorArcaModels.AlicIva[CAEDetRequest.Iva.Length + 1];
+                    var newArray = new CAECOM.AlicIva[CAEDetRequest.Iva.Length + 1];
                     // Copy the existing elements to the new array
                     Array.Copy(CAEDetRequest.Iva, newArray, CAEDetRequest.Iva.Length);
                     // Add the new element to the new array
@@ -967,7 +977,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad AliccIvas {CAEDetRequest.Iva.Count()} : {codigoAlicuota} - {importeBase} - {importeIVA} .. {ex.StackTrace}");
             }
         }
@@ -977,7 +988,7 @@ namespace InnercorArca.V1
             try
             {
 
-                InnercorArcaModels.Opcional nuevoOpcional = new InnercorArcaModels.Opcional()
+                CAECOM.Opcional nuevoOpcional = new CAECOM.Opcional()
                 {
                     Id = codigo,
                     Valor = valor
@@ -988,10 +999,10 @@ namespace InnercorArca.V1
                 if (nuevoOpcional != null)
                 {
                     if (CAEDetRequest.Opcionales == null)
-                        CAEDetRequest.Opcionales = new InnercorArcaModels.Opcional[0]; // Initialize the array
+                        CAEDetRequest.Opcionales = new CAECOM.Opcional[0]; // Initialize the array
 
                     // Create a new array with the new size
-                    var newArray = new InnercorArcaModels.Opcional[CAEDetRequest.Opcionales.Length + 1];
+                    var newArray = new CAECOM.Opcional[CAEDetRequest.Opcionales.Length + 1];
                     // Copy the existing elements to the new array
                     Array.Copy(CAEDetRequest.Opcionales, newArray, CAEDetRequest.Opcionales.Length);
                     // Add the new element to the new array
@@ -1005,7 +1016,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad Opcionales {CAEDetRequest.Opcionales.Count()}: {codigo} - {valor} .. {ex.StackTrace}");
             }
         }
@@ -1037,7 +1049,7 @@ namespace InnercorArca.V1
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, $"La parte entera Importe no puede tener más de 13 dígitos.", "Agrega Tributo 3");
                     return;
                 }
-                InnercorArcaModels.Tributo nuevoTributo = new InnercorArcaModels.Tributo()
+                CAECOM.Tributo nuevoTributo = new CAECOM.Tributo()
                 {
                     Id = codimp,
                     Desc = descri,
@@ -1050,10 +1062,10 @@ namespace InnercorArca.V1
                 if (nuevoTributo != null)
                 {
                     if (CAEDetRequest.Tributos == null)
-                        CAEDetRequest.Tributos = new InnercorArcaModels.Tributo[0]; // Initialize the array
+                        CAEDetRequest.Tributos = new CAECOM.Tributo[0]; // Initialize the array
 
                     // Create a new array with the new size
-                    var newArray = new InnercorArcaModels.Tributo[CAEDetRequest.Tributos.Length + 1];
+                    var newArray = new CAECOM.Tributo[CAEDetRequest.Tributos.Length + 1];
                     // Copy the existing elements to the new array
                     Array.Copy(CAEDetRequest.Tributos, newArray, CAEDetRequest.Tributos.Length);
                     // Add the new element to the new array
@@ -1067,7 +1079,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad Tributos {CAEDetRequest.Tributos.Count()} : {codimp} - {descri} - {impbase} - {alicuo} - {import} .. {ex.StackTrace}");
             }
         }
@@ -1085,7 +1098,7 @@ namespace InnercorArca.V1
                 }
                 if (HabilitaLog) HelpersLogger.Escribir($"AgregaCompAsoc Pos Validaciones Fecha");
 
-                InnercorArcaModels.CbteAsoc nuevoComprobanteAsociado = new InnercorArcaModels.CbteAsoc()
+                CAECOM.CbteAsoc nuevoComprobanteAsociado = new CAECOM.CbteAsoc()
                 {
                     Tipo = nTipCmp,
                     PtoVta = nPtoVta,
@@ -1098,10 +1111,10 @@ namespace InnercorArca.V1
                 if (nuevoComprobanteAsociado != null)
                 {
                     if (CAEDetRequest.ComprobantesAsociados == null)
-                        CAEDetRequest.ComprobantesAsociados = new InnercorArcaModels.CbteAsoc[0]; // Initialize the array
+                        CAEDetRequest.ComprobantesAsociados = new CAECOM.CbteAsoc[0]; // Initialize the array
 
                     // Create a new array with the new size
-                    var newArray = new InnercorArcaModels.CbteAsoc[CAEDetRequest.ComprobantesAsociados.Length + 1];
+                    var newArray = new CAECOM.CbteAsoc[CAEDetRequest.ComprobantesAsociados.Length + 1];
                     // Copy the existing elements to the new array
                     Array.Copy(CAEDetRequest.ComprobantesAsociados, newArray, CAEDetRequest.ComprobantesAsociados.Length);
                     // Add the new element to the new array
@@ -1115,7 +1128,8 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
+                if (HabilitaLog)
+                    HelpersLogger.Escribir($"ERROR Exception: {ex.Message} {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"Cantidad Comprobantes Asociados {CAEDetRequest.ComprobantesAsociados.Count()}: {nTipCmp} - {nPtoVta} - {nNroCmp} - {nNroCuit} - {dFchCmp} .. {ex.StackTrace} ");
             }
         }

@@ -1,17 +1,11 @@
-﻿using InnercorArca.V1.ModelsCOM;
-using InnercorArca.V1.Procesos;
+﻿using InnercorArca.V1.Procesos;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
-using System.IO;
 using System.Text;
 using System.Web.Script.Serialization;
-using System.Web.Services.Description;
-using System.Xml;
-using System.Xml.Serialization;
 using ZXing;
-using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using static InnercorArca.V1.ModelsCOM.CacheResultCOM;
+using static InnercorArca.V1.ModelsCOM.CAECOM;
 
 namespace InnercorArca.V1.Helpers
 {
@@ -23,20 +17,6 @@ namespace InnercorArca.V1.Helpers
             try
             {
                 feAuthRequest = ArcaCAE.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit, Produccion);
-                //if (Produccion)
-                //{
-                //    if (feAuthRequest == null)
-                //    {
-                //        feAuthRequest = Procesos.ArcaCAE.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
-                //    }
-                //}
-                //else
-                //{
-                //    if (feAuthRequest == null)
-                //    {
-                //        feAuthRequest = Procesos.ArcaCAEHOMO.FEAuthRequest_Set(tkValido.Token, tkValido.Sign, cuit);
-                //    }
-                //}
             }
             catch (Exception ex)
             {
@@ -92,9 +72,6 @@ namespace InnercorArca.V1.Helpers
                     {
                         if (objResp.FeDetResp[0].Observaciones != null)
                         {
-                            //errorCode = objResp.FeDetResp[0].Observaciones[0].Code;
-                            //errorDesc = objResp.FeDetResp[0].Observaciones[0].Msg;
-
                             observ = objResp.FeDetResp[0].Observaciones[0].Msg;
                             if (habilitaLog) HelpersLogger.Escribir($"Observ {observ}");
                         }
@@ -177,26 +154,15 @@ namespace InnercorArca.V1.Helpers
         {
             try
             {
-                //string sturl = @"https://www.afip.gob.ar/fe/qr/";
-
-                ////{"ver":1,"fecha":"2020-10-13","cuit":30000000007,"ptoVta":10,"tipoCmp":1,"nroCmp":94,"importe":12100,"moneda":"DOL","ctz":65,"tipoDocRec":80,"nroDocRec":20000000001,"tipoCodAut":"E","codAut":70417054367476}
-                //string jSon ="{ver:"+ nVersion+" ,fecha:" + fecha.ToString("yyyy-MM-dd") + ",cuit: " + cuit + ",ptoVta:" + ptovta.ToString() +
-                //        ",tipoCmp:" + tipoComp + ",nroCmp:" + nroComp.ToString() + ",importe:" + importe.ToString("#############00") + ",moneda:" + moneda + ",ctz:" + cot +
-                //        ",tipoDocRec:" + tipoDoc + ",nroDocRec:" + nroDocRec + ",tipoCodAut:" + cTipoCodAut +",codAut:" + codAut + "}";
-                //string DATOS_CMP_BASE_64 =HelpersGlobal.Base64Encode(jSon);
-
-                //string value = sturl + "?p=" + DATOS_CMP_BASE_64;
-
-
                 var datosQR = new
                 {
                     ver = nVersion,
                     fecha = fecha.ToString("yyyy-MM-dd"),
-                    cuit =nCuit,
+                    cuit = nCuit,
                     ptoVta = ptovta,
                     tipoCmp = tipoComp,
                     nroCmp = nroComp,
-                    importe =  importeTotal,
+                    importe = importeTotal,
                     moneda = sMoneda,
                     ctz = cot,
                     tipoDocRec = tipoDoc,
@@ -212,13 +178,6 @@ namespace InnercorArca.V1.Helpers
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
                 string base64 = Convert.ToBase64String(bytes);
 
-                // Convertir a base64 URL-safe (AFIP)
-                //string base64UrlSafe = base64
-                //    .Replace("+", "-")
-                //    .Replace("/", "_")
-                //    .TrimEnd('=');
-
-                //string value = $"https://www.afip.gob.ar/fe/qr/?p={base64UrlSafe}";
                 string value = $"https://www.afip.gob.ar/fe/qr/?p={base64}";
 
                 if (habilitaLOG) HelpersLogger.Escribir($"URL QR {value}");
@@ -226,7 +185,7 @@ namespace InnercorArca.V1.Helpers
 
                 // Generar el codigo, este metodo retorna una bitmap
                 try
-                { 
+                {
                     var writer = new BarcodeWriter() // Si un barcodeWriter para generar un codigo QR (O.O)
                     {
                         Format = BarcodeFormat.QR_CODE, //setearle el tipo de codigo que generara.
@@ -270,7 +229,7 @@ namespace InnercorArca.V1.Helpers
 
 
         // Método genérico para serializar cualquier objeto a XML
-        public static object ConvertAlicIva(InnercorArca.V1.Helpers.InnercorArcaModels.AlicIva alicIva, bool produccion)
+        public static object ConvertAlicIva(AlicIva alicIva, bool produccion)
         {
             if (produccion)
             {
@@ -292,7 +251,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-        public static object ConvertirTributos(InnercorArca.V1.Helpers.InnercorArcaModels.Tributo tributo, bool produccion)
+        public static object ConvertirTributos(Tributo tributo, bool produccion)
         {
             if (produccion)
             {
@@ -318,7 +277,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-        public static object ConvertirOpcionales(InnercorArca.V1.Helpers.InnercorArcaModels.Opcional opcional, bool produccion)
+        public static object ConvertirOpcionales(Opcional opcional, bool produccion)
         {
             if (produccion)
             {
@@ -338,7 +297,7 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-        public static object ConvertirCompAsoc(InnercorArca.V1.Helpers.InnercorArcaModels.CbteAsoc cbteAsoc, bool produccion)
+        public static object ConvertirCompAsoc(CbteAsoc cbteAsoc, bool produccion)
         {
             if (produccion)
             {

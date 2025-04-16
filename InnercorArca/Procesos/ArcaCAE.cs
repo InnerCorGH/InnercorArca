@@ -1,7 +1,9 @@
 using InnercorArca.V1.Helpers;
 using System;
 using System.Linq;
-using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using static InnercorArca.V1.ModelsCOM.CacheResultCOM;
+using static InnercorArca.V1.ModelsCOM.CAEACOM;
+using static InnercorArca.V1.ModelsCOM.CAECOM;
 
 namespace InnercorArca.V1.Procesos
 {

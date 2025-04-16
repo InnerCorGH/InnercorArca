@@ -1,5 +1,5 @@
 ﻿using System;
-using static InnercorArca.V1.Helpers.InnercorArcaModels;
+using static InnercorArca.V1.ModelsCOM.CacheResultCOM;
 
 namespace InnercorArca.V1.Helpers
 {

@@ -40,7 +40,7 @@ namespace InnercorArca.V1
     public class qr : IQR
     {
         #region [Variables Públicas Expuestas ]
-        public string ArchivoQR { get;  set; } = string.Empty; // Código QR del comprobante autorizado (en formato Base64). 
+        public string ArchivoQR { get; set; } = string.Empty; // Código QR del comprobante autorizado (en formato Base64). 
         public bool HabilitaLog { get; set; } = false;
         public int ErrorCode { get; private set; }
         public string ErrorDesc { get; private set; } = string.Empty;
@@ -64,8 +64,8 @@ namespace InnercorArca.V1
         {
             try
             {
-                if(HabilitaLog) HelpersLogger.Escribir($"Generar QR Version {nVersion}");
-                
+                if (HabilitaLog) HelpersLogger.Escribir($"Generar QR Version {nVersion}");
+
                 // Parse the date string in the format "yyyyMMdd"
                 if (!DateTime.TryParseExact(cFecha, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha))
                 {
@@ -73,14 +73,14 @@ namespace InnercorArca.V1
                     SetError(GlobalSettings.Errors.FORMAT_ERROR, "La fecha debe estar en el formato 'yyyyMMdd'.", "Generar ");
                     return false;
                 }
-                long cuit = long.Parse(nCuit );
-                cMoneda = cMoneda.Trim().Length==0? "PES":cMoneda.ToUpper().Trim();
+                long cuit = long.Parse(nCuit);
+                cMoneda = cMoneda.Trim().Length == 0 ? "PES" : cMoneda.ToUpper().Trim();
                 nCtz = nCtz == 0 ? 1 : nCtz;
 
-                if (HabilitaLog) HelpersLogger.Escribir($"Generar {nVersion} {cFecha} {cuit} {nCuit} {nPtoVta}") ;
+                if (HabilitaLog) HelpersLogger.Escribir($"Generar {nVersion} {cFecha} {cuit} {nCuit} {nPtoVta}");
                 // Generar el código QR del comprobante autorizado (en formato Base64).
-                string QR = HelpersArca.GeneraCodigoQR(HabilitaLog, nVersion, fecha,cuit, Convert.ToInt64(nPtoVta), nTipoCmp, nNroCmp, nImporte, cMoneda, nCtz, nTipoDocRec, nNroDocRec, cTipoCodAut, nCodAut, ArchivoQR);
-                if ( QR.Length==0)
+                string QR = HelpersArca.GeneraCodigoQR(HabilitaLog, nVersion, fecha, cuit, Convert.ToInt64(nPtoVta), nTipoCmp, nNroCmp, nImporte, cMoneda, nCtz, nTipoDocRec, nNroDocRec, cTipoCodAut, nCodAut, ArchivoQR);
+                if (QR.Length == 0)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"ERROR: No se pudo generar el código QR. {QR}");
                     SetError(GlobalSettings.Errors.CERT_ERROR, "No se pudo generar el código QR.", "Generar ");

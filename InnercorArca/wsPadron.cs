@@ -93,13 +93,12 @@ namespace InnercorArca.V1
         #region [Metodos ARCA]
         public bool Login(string pathCRT, string pathKey)
         {
+            if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {GetVersion()} PathCRT:{pathCRT} pathKEY:{pathKey}");
+
+
             try
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Login Versión {GetVersion()}");
-
-                if (HabilitaLog) HelpersLogger.Escribir($"Login Verion {GetVersion()}");
-
-                string urlWSAA = string.Empty;
+                 string urlWSAA = string.Empty;
                 //Definir si variable de produccion es true o false segun la url del login
                 Produccion = ModoProduccion;
                 urlWSAA = Produccion ? GlobalSettings.urlWSAAProd : GlobalSettings.urlWSAAHomo;
@@ -136,6 +135,7 @@ namespace InnercorArca.V1
                 }
                 // Cargar el certificado y la clave privada directamente (sin usar .pfx)
                 X509Certificate2 certificate = HelpersCert.LoadCertificateAndPrivateKey(pathCRT, pathKey);
+                //X509Certificate2 certificate = HelpersCert.ObtieneCertificadoDesdeArchivos(pathCRT, pathKey);
                 if (certificate == null)
                 {
                     if (HabilitaLog) HelpersLogger.Escribir($"Login Error al cargar el certificado y la clave privada {pathCRT} {pathKey}");
@@ -176,6 +176,7 @@ namespace InnercorArca.V1
 
         public bool Consultar(string nCuit, ref object oContrib)
         {
+            if (HabilitaLog) HelpersLogger.Escribir($"Consultar nCuit:{nCuit} PathCache:{PathCache}");
             try
             {
                 // obtiene token y sign del archivo cache
@@ -225,6 +226,7 @@ namespace InnercorArca.V1
         #region [Métodos Internos ] 
         private bool TryGetPersona(string sCuit, ref dynamic response )
         {
+            if (HabilitaLog) HelpersLogger.Escribir($"TryGetPersona sCuit:{sCuit}  ");
             try
             {
 
@@ -297,6 +299,7 @@ namespace InnercorArca.V1
 
         public object GetContribuyente()
         {
+            if (HabilitaLog) HelpersLogger.Escribir($"GetContribuyente");
             try
             {
                 return Contribuyente;
@@ -310,6 +313,7 @@ namespace InnercorArca.V1
         }
         public object GetDomicilio()
         {
+            if (HabilitaLog) HelpersLogger.Escribir($"GetDomicilio");
             try
             {
                 if (Contribuyente == null) return null;

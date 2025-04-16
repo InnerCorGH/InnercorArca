@@ -278,13 +278,14 @@ namespace InnercorArca.V1.Helpers
                 _globalUniqueID += 1;
 
                 if (this._verboseMode)
-                {
-                    // Console.WriteLine(XmlLoginTicketRequest.OuterXml);
+                { 
+                    HelpersLogger.Escribir("LoginTicketRequest: " + XmlLoginTicketRequest.OuterXml);
                 }
             }
 
             catch (Exception excepcionAlGenerarLoginTicketRequest)
             {
+                HelpersLogger.Escribir("Error al generar el LoginTicketRequest: " + excepcionAlGenerarLoginTicketRequest.Message);
                 throw new Exception("***Error GENERANDO el LoginTicketRequest : " + excepcionAlGenerarLoginTicketRequest.Message);
             }
 
@@ -292,17 +293,16 @@ namespace InnercorArca.V1.Helpers
             try
             {
                 if (this._verboseMode)
-                {
-                    //  Console.WriteLine("***Leyendo certificado: {0}", RutaDelCertificadoFirmante);
+                { 
+                    HelpersLogger.Escribir("Leyendo certificado: " + RutaDelCertificadoFirmante);
                 }
 
                 //X509Certificate2 certFirmante = CertificadosX509Lib.ObtieneCertificadoDesdeArchivo(RutaDelCertificadoFirmante);
                 X509Certificate2 certFirmante = HelpersCert.ObtieneCertificadoDesdeArchivos(RutaDelCertificadoFirmante, RutaDelKey);
 
                 if (this._verboseMode)
-                {
-                    //    Console.WriteLine("***Firmando: ");
-                    //   Console.WriteLine(XmlLoginTicketRequest.OuterXml);
+                { 
+                    HelpersLogger.Escribir("Firmando: " + XmlLoginTicketRequest.OuterXml);
                 }
 
                 // Convierto el login ticket request a bytes, para firmar 
@@ -316,6 +316,7 @@ namespace InnercorArca.V1.Helpers
 
             catch (Exception excepcionAlFirmar)
             {
+                HelpersLogger.Escribir("Error al firmar el LoginTicketRequest: " + excepcionAlFirmar.Message);
                 throw new Exception("***Error FIRMANDO el LoginTicketRequest : " + excepcionAlFirmar.Message);
             }
 
@@ -324,9 +325,8 @@ namespace InnercorArca.V1.Helpers
             {
                 if (this._verboseMode)
                 {
-                    //    Console.WriteLine("***Llamando al WSAA en URL: {0}", argUrlWsaa);
-                    //     Console.WriteLine("***Argumento en el request:");
-                    //      Console.WriteLine(cmsFirmadoBase64);
+                    HelpersLogger.Escribir("Llamando al WSAA en URL: " + argUrlWsaa);
+                    HelpersLogger.Escribir("Argumento en el request: " + cmsFirmadoBase64);
                 }
                 if (produccion)
                 {
@@ -347,13 +347,13 @@ namespace InnercorArca.V1.Helpers
 
                 if (this._verboseMode)
                 {
-                    //      Console.WriteLine("***LoguinTicketResponse: ");
-                    //      Console.WriteLine(loginTicketResponse);
+                    HelpersLogger.Escribir("LoguinTicketResponse: " + loginTicketResponse);
                 }
             }
 
             catch (Exception excepcionAlInvocarWsaa)
             {
+                HelpersLogger.Escribir("Error al invocar el servicio WSAA: " + excepcionAlInvocarWsaa.Message);
                 throw new Exception("***Error INVOCANDO al servicio WSAA : " + excepcionAlInvocarWsaa.Message);
             }
 
@@ -372,6 +372,7 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception excepcionAlAnalizarLoginTicketResponse)
             {
+                HelpersLogger.Escribir("Error al analizar el LoginTicketResponse: " + excepcionAlAnalizarLoginTicketResponse.Message);
                 throw new Exception("***Error ANALIZANDO el LoginTicketResponse : " + excepcionAlAnalizarLoginTicketResponse.Message);
             }
 
@@ -414,14 +415,16 @@ namespace InnercorArca.V1.Helpers
 
                 if (VerboseMode)
                 {
-                    Console.WriteLine("***Firmando bytes del mensaje...");
+                    //Console.WriteLine("***Firmando bytes del mensaje...");
+                    HelpersLogger.Escribir("***Firmando bytes del mensaje...");
                 }
                 // Firmo el mensaje PKCS #7 
                 cmsFirmado.ComputeSignature(cmsFirmante);
 
                 if (VerboseMode)
                 {
-                    Console.WriteLine("***OK mensaje firmado");
+                    //Console.WriteLine("***OK mensaje firmado");
+                    HelpersLogger.Escribir("***OK mensaje firmado");    
                 }
 
                 // Encodeo el mensaje PKCS #7. 
@@ -429,6 +432,10 @@ namespace InnercorArca.V1.Helpers
             }
             catch (Exception excepcionAlFirmar)
             {
+                if (VerboseMode)
+                {
+                    HelpersLogger.Escribir("***Error al firmar: " + excepcionAlFirmar.Message);
+                }
                 throw new Exception("***Error al firmar: " + excepcionAlFirmar.Message);
             }
         }

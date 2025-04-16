@@ -14,80 +14,7 @@ namespace InnercorArca.V1.Helpers
     public static class HelpersCert
     {
 
-        public static X509Certificate2 LoadCertificateAndPrivateKey(string crtPath, string keyPath)
-        {
-            try
-            {
-                // Cargar el certificado (.crt) en formato PEM
-                string certPem = File.ReadAllText(crtPath);
-                byte[] certBytes = Convert.FromBase64String(
-                    certPem.Replace("-----BEGIN CERTIFICATE-----", "")
-                           .Replace("-----END CERTIFICATE-----", "")
-                           .Replace("\r", "")
-                           .Replace("\n", "")
-                );
-                X509Certificate2 certificate = new X509Certificate2(certBytes);
-
-                // Cargar la clave privada (.key) en formato PEM
-                AsymmetricKeyParameter privateKey;
-                using (TextReader keyReader = new StringReader(File.ReadAllText(keyPath)))
-                {
-                    PemReader pemReader = new PemReader(keyReader);
-                    var keyObject = pemReader.ReadObject();
-
-                    // Verificar si es un par de claves o solo la clave privada
-                    if (keyObject is AsymmetricCipherKeyPair keyPair)
-                    {
-                        privateKey = keyPair.Private;  // Extraer solo la clave privada
-                    }
-                    else if (keyObject is AsymmetricKeyParameter keyParam)
-                    {
-                        privateKey = keyParam;  // Usar directamente si ya es AsymmetricKeyParameter
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Formato de clave privada no soportado.");
-                    }
-                }
-
-                // Detectar tipo de clave y combinar adecuadamente
-                if (privateKey is RsaPrivateCrtKeyParameters rsaKey)
-                {
-                    // Manejar claves RSA
-                    var rsa = DotNetUtilities.ToRSA(rsaKey);
-                    var certWithKey = certificate.CopyWithPrivateKey(rsa);
-                    return certWithKey;
-                }
-                else if (privateKey is ECPrivateKeyParameters ecKey)
-                {
-                    // Manejar claves EC (Elliptic Curve)
-                    var ecParams = new ECPublicKeyParameters("EC", ecKey.Parameters.G.Multiply(ecKey.D), ecKey.Parameters);
-                    var ecDsa = ECDsa.Create(new ECParameters
-                    {
-                        Curve = ECCurve.CreateFromOid(new Oid(ecKey.PublicKeyParamSet.Id)),
-                        D = ecKey.D.ToByteArrayUnsigned(),
-                        Q = new ECPoint
-                        {
-                            X = ecParams.Q.AffineXCoord.GetEncoded(),
-                            Y = ecParams.Q.AffineYCoord.GetEncoded()
-                        }
-                    });
-
-                    var certWithKey = certificate.CopyWithPrivateKey(ecDsa);
-                    return certWithKey;
-
-                }
-                else
-                {
-                    throw new InvalidOperationException("Tipo de clave privada no soportado.");
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
+     
         public static X509Certificate2 ObtieneCertificadoDesdeArchivos(string rutaCrt, string rutaKey)
         {
             if (rutaCrt == null || rutaKey == null)
@@ -170,8 +97,6 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
-
-
         private static RSACryptoServiceProvider LoadPrivateKeyFromPem(string keyPath)
         {
             try
@@ -252,6 +177,79 @@ namespace InnercorArca.V1.Helpers
             }
         }
 
+        public static X509Certificate2 LoadCertificateAndPrivateKey(string crtPath, string keyPath)
+        {
+            try
+            {
+                // Cargar el certificado (.crt) en formato PEM
+                string certPem = File.ReadAllText(crtPath);
+                byte[] certBytes = Convert.FromBase64String(
+                    certPem.Replace("-----BEGIN CERTIFICATE-----", "")
+                           .Replace("-----END CERTIFICATE-----", "")
+                           .Replace("\r", "")
+                           .Replace("\n", "")
+                );
+                X509Certificate2 certificate = new X509Certificate2(certBytes);
+
+                // Cargar la clave privada (.key) en formato PEM
+                AsymmetricKeyParameter privateKey;
+                using (TextReader keyReader = new StringReader(File.ReadAllText(keyPath)))
+                {
+                    PemReader pemReader = new PemReader(keyReader);
+                    var keyObject = pemReader.ReadObject();
+
+                    // Verificar si es un par de claves o solo la clave privada
+                    if (keyObject is AsymmetricCipherKeyPair keyPair)
+                    {
+                        privateKey = keyPair.Private;  // Extraer solo la clave privada
+                    }
+                    else if (keyObject is AsymmetricKeyParameter keyParam)
+                    {
+                        privateKey = keyParam;  // Usar directamente si ya es AsymmetricKeyParameter
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Formato de clave privada no soportado.");
+                    }
+                }
+
+                // Detectar tipo de clave y combinar adecuadamente
+                if (privateKey is RsaPrivateCrtKeyParameters rsaKey)
+                {
+                    // Manejar claves RSA
+                    var rsa = DotNetUtilities.ToRSA(rsaKey);
+                    var certWithKey = certificate.CopyWithPrivateKey(rsa);
+                    return certWithKey;
+                }
+                else if (privateKey is ECPrivateKeyParameters ecKey)
+                {
+                    // Manejar claves EC (Elliptic Curve)
+                    var ecParams = new ECPublicKeyParameters("EC", ecKey.Parameters.G.Multiply(ecKey.D), ecKey.Parameters);
+                    var ecDsa = ECDsa.Create(new ECParameters
+                    {
+                        Curve = ECCurve.CreateFromOid(new Oid(ecKey.PublicKeyParamSet.Id)),
+                        D = ecKey.D.ToByteArrayUnsigned(),
+                        Q = new ECPoint
+                        {
+                            X = ecParams.Q.AffineXCoord.GetEncoded(),
+                            Y = ecParams.Q.AffineYCoord.GetEncoded()
+                        }
+                    });
+
+                    var certWithKey = certificate.CopyWithPrivateKey(ecDsa);
+                    return certWithKey;
+
+                }
+                else
+                {
+                    throw new InvalidOperationException("Tipo de clave privada no soportado.");
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
 
 
     }

@@ -373,7 +373,7 @@ namespace InnercorArca.V1
         public bool RecuperaLastCMP(int nPtoVta, int nTipCom, ref int nUltNro)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicio RecuperaLastCMP PtoVta:{nPtoVta} TipCom:{nTipCom} UltNro:{nUltNro}");
-            int errCode = 0; string errDesc = "";
+            int errCode = 0; string errDesc = "";TraceBack = "";
 
             try
             {
@@ -543,7 +543,7 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message}  {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, ex.StackTrace);
                 return false;
             }
@@ -555,7 +555,7 @@ namespace InnercorArca.V1
         public bool Autorizar(int nPtoVta, int nTipCom)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicio Autorizar PtoVta:{nPtoVta} TipCom:{nTipCom}");
-            NumeroCAE = ""; VencimientoCAE = ""; Result = ""; Reproc = "";
+            NumeroCAE = ""; VencimientoCAE = ""; Result = ""; Reproc = ""; TraceBack = "";
             try
             {
 
@@ -595,7 +595,7 @@ namespace InnercorArca.V1
             }
             catch (Exception ex)
             {
-                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message} {TraceBack} {ex.StackTrace}");
+                if (HabilitaLog) HelpersLogger.Escribir($"Error Exception {ex.Message}   {ex.StackTrace}");
                 SetError(GlobalSettings.Errors.EXCEPTION, ex.Message, $"{TraceBack} {ex.StackTrace}");
                 return false;
             }
@@ -622,7 +622,7 @@ namespace InnercorArca.V1
         public bool CAEAConsultar(int nPeriod, short nQuince, ref string cNroCAE, ref string dFchDes, ref string dFchHas, ref string dFchTop, ref string dFchPro)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicio CAEAConsultar Period:{nPeriod} Quince:{nQuince} NroCAE {cNroCAE} FchDes: {dFchDes} FchHas:{dFchHas} FchTop:{dFchTop} FchPro: {dFchPro} ");
-            NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";
+            NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";TraceBack = "";
             try
             {
                 bool resp = ArcaCAEA.MetodoCAEA(GlobalSettings.MetCAEA.CAEACONSULTAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
@@ -654,7 +654,7 @@ namespace InnercorArca.V1
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicio CAEASolicitar Period:{nPeriod} Quince:{nQuince}  NroCAE {cNroCAE} FchDes: {dFchDes} FchHas:{dFchHas} FchTop:{dFchTop} FchPro: {dFchPro} ");
 
-            NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";
+            NumeroCAE = ""; FechaDesde = ""; FechaHasta = ""; FechaTope = ""; FechaProceso = "";TraceBack = "";
             try
             {
                 bool resp = ArcaCAEA.MetodoCAEA(GlobalSettings.MetCAEA.CAEASOLICITAR, TkValido, PathCache, Produccion, Cuit, nPeriod, nQuince, ref cNroCAE, ref dFchDes, ref dFchHas, ref dFchTop, ref dFchPro,
@@ -686,7 +686,7 @@ namespace InnercorArca.V1
         public bool CAEAInformar(int nPtoVta, int nTipCom, string sCAE)
         {
             if (HabilitaLog) HelpersLogger.Escribir($"Inicio CAEAInformar PtoVta:{nPtoVta} TipCom:{nTipCom} CAE:{sCAE}");
-            NumeroCAE = ""; VencimientoCAE = ""; Result = ""; Reproc = "";
+            NumeroCAE = ""; VencimientoCAE = ""; Result = ""; Reproc = "";TraceBack = "";
             try
             {
                 ////obtiene token y sign del archivo cache

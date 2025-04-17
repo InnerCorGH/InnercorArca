@@ -203,9 +203,9 @@ namespace InnercorArca.V1.Procesos
 
                 dynamic cabecera;
                 if (isProduction)
-                    cabecera = new Wsfev1.FECAECabRequest();
+                    cabecera = new Wsfev1.FECAEACabRequest();
                 else
-                    cabecera = new Wsfev1Homo.FECAECabRequest();
+                    cabecera = new Wsfev1Homo.FECAEACabRequest();
 
                 cabecera.CantReg = 1;
                 cabecera.PtoVta = nPtoVta;
@@ -213,7 +213,7 @@ namespace InnercorArca.V1.Procesos
 
                 if (habilitaLog) HelpersLogger.Escribir("RegInformativoARCA Auth CabReq");
 
-
+                #region [Conversion CAE a CAEA]
                 //Convertir CAEADetRequest a FECAEDetRequest
                 if (habilitaLog) HelpersLogger.Escribir($"Antes Copy {HelpersGlobal.SerializeToXml(caeDetRequest)}");
 
@@ -222,13 +222,13 @@ namespace InnercorArca.V1.Procesos
 
                 InnCAEADetReq.CAEA = sCAE;
                 InnCAEADetReq.CbteFchHsGen = cbteFchGen;
-
+                #endregion
 
                 dynamic detalle;
                 if (isProduction)
-                    detalle = new Wsfev1.FECAEDetRequest();
+                    detalle = new Wsfev1.FECAEADetRequest();
                 else
-                    detalle = new Wsfev1Homo.FECAEDetRequest();
+                    detalle = new Wsfev1Homo.FECAEADetRequest();
 
 
                 detalle.Concepto = InnCAEADetReq.Concepto;
@@ -249,6 +249,8 @@ namespace InnercorArca.V1.Procesos
                 detalle.MonId = caeDetRequest.MonId;
                 detalle.CondicionIVAReceptorId = caeDetRequest.CondicionIvaReceptor;
                 detalle.CanMisMonExt = caeDetRequest.CantidadMismaMonedaExt;
+                detalle.CAEA = InnCAEADetReq.CAEA;
+                detalle.CbteFchHsGen = InnCAEADetReq.CbteFch;
 
 
                 if (habilitaLog) HelpersLogger.Escribir("RegInformativoARCA Linea 2");
@@ -307,13 +309,13 @@ namespace InnercorArca.V1.Procesos
                 dynamic solicitud;
                 if (isProduction)
                 {
-                    solicitud = new Wsfev1.FECAERequest();
-                    solicitud.FeDetReq = new[] { (Wsfev1.FECAEDetRequest)detalle };
+                    solicitud = new Wsfev1.FECAEARequest();
+                    solicitud.FeDetReq = new[] { (Wsfev1.FECAEADetRequest)detalle };
                 }
                 else
                 {
-                    solicitud = new Wsfev1Homo.FECAERequest();
-                    solicitud.FeDetReq = new[] { (Wsfev1Homo.FECAEDetRequest)detalle };
+                    solicitud = new Wsfev1Homo.FECAEARequest();
+                    solicitud.FeDetReq = new[] { (Wsfev1Homo.FECAEADetRequest)detalle };
                 }
                 solicitud.FeCabReq = cabecera;
 
